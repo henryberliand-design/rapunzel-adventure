@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Rapunzel's Great Adventure</title>
+
+<!-- PWA / Home Screen meta -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rapunzel">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2c1654">
+<meta name="description" content="Rapunzel's Great Adventure - A game by Anna & Dad">
+
+<!-- Inline App Icon (base64 encoded SVG) -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%232c1654'/%3E%3Cstop offset='100%25' stop-color='%234a1a6b'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='96' fill='url(%23bg)'/%3E%3Ccircle cx='256' cy='200' r='60' fill='%23FFDAB9'/%3E%3Cellipse cx='256' cy='175' rx='55' ry='40' fill='%23F4D03F'/%3E%3Ccircle cx='236' cy='200' r='8' fill='%232ECC71'/%3E%3Ccircle cx='276' cy='200' r='8' fill='%232ECC71'/%3E%3Ccircle cx='238' cy='198' r='3' fill='white'/%3E%3Ccircle cx='278' cy='198' r='3' fill='white'/%3E%3Cpath d='M244 218 Q256 228 268 218' stroke='%23C0392B' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Cpath d='M210 240 L200 340 L256 360 L312 340 L302 240 Z' fill='%239B59B6'/%3E%3Cpath d='M225 260 L220 340 L256 355 L292 340 L287 260 Z' fill='%238E44AD'/%3E%3Cpath d='M170 180 Q120 300 180 400' stroke='%23F4D03F' stroke-width='16' fill='none' stroke-linecap='round'/%3E%3Cpath d='M342 180 Q392 300 332 400' stroke='%23F4D03F' stroke-width='16' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='256' cy='430' r='24' fill='%23FFD700' opacity='0.8'/%3E%3Ccircle cx='256' cy='430' r='14' fill='%23FFF8DC' opacity='0.9'/%3E%3Ctext x='256' y='480' text-anchor='middle' font-size='36' fill='%23FFD700' font-family='Georgia,serif'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%232c1654'/%3E%3Cstop offset='100%25' stop-color='%234a1a6b'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='96' fill='url(%23bg)'/%3E%3Ccircle cx='256' cy='200' r='60' fill='%23FFDAB9'/%3E%3Cellipse cx='256' cy='175' rx='55' ry='40' fill='%23F4D03F'/%3E%3Ccircle cx='236' cy='200' r='8' fill='%232ECC71'/%3E%3Ccircle cx='276' cy='200' r='8' fill='%232ECC71'/%3E%3Ccircle cx='238' cy='198' r='3' fill='white'/%3E%3Ccircle cx='278' cy='198' r='3' fill='white'/%3E%3Cpath d='M244 218 Q256 228 268 218' stroke='%23C0392B' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Cpath d='M210 240 L200 340 L256 360 L312 340 L302 240 Z' fill='%239B59B6'/%3E%3Cpath d='M225 260 L220 340 L256 355 L292 340 L287 260 Z' fill='%238E44AD'/%3E%3Cpath d='M170 180 Q120 300 180 400' stroke='%23F4D03F' stroke-width='16' fill='none' stroke-linecap='round'/%3E%3Cpath d='M342 180 Q392 300 332 400' stroke='%23F4D03F' stroke-width='16' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='256' cy='430' r='24' fill='%23FFD700' opacity='0.8'/%3E%3Ccircle cx='256' cy='430' r='14' fill='%23FFF8DC' opacity='0.9'/%3E%3C/svg%3E">
+
+<!-- Inline Web App Manifest -->
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Rapunzel's%20Great%20Adventure%22%2C%22short_name%22%3A%22Rapunzel%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22orientation%22%3A%22any%22%2C%22background_color%22%3A%22%232c1654%22%2C%22theme_color%22%3A%22%232c1654%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20512%20512'%253E%253Crect%20width%3D'512'%20height%3D'512'%20rx%3D'96'%20fill%3D'%25232c1654'%2F%253E%253Ctext%20x%3D'256'%20y%3D'320'%20text-anchor%3D'middle'%20font-size%3D'256'%253E%25F0%259F%2591%25B8%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #2c1654;
+    font-family: Georgia, 'Times New Roman', serif;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+  body { position: fixed; inset: 0; }
+  #game { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+  canvas {
+    image-rendering: pixelated;
+    border-radius: 8px;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+    touch-action: none;
+  }
+
+  .screen {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+
+  .btn {
+    padding: 14px 40px;
+    font-size: 20px;
+    font-family: Georgia, serif;
+    color: white;
+    border-radius: 30px;
+    cursor: pointer;
+    border: 3px solid;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .btn-purple {
+    background: linear-gradient(135deg, #9B59B6, #8E44AD);
+    border-color: #D2B4DE;
+    box-shadow: 0 4px 20px rgba(155, 89, 182, 0.5);
+  }
+  .btn-green {
+    background: linear-gradient(135deg, #4CAF50, #388E3C);
+    border-color: #81C784;
+    box-shadow: 0 4px 20px rgba(76, 175, 80, 0.4);
+  }
+
+  .dpad {
+    display: grid;
+    grid-template-areas:
+      '. up .'
+      'left center right'
+      '. down .';
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .dpad-btn {
+    width: 54px; height: 54px;
+    border-radius: 12px;
+    border: 2px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.15);
+    color: white;
+    font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dpad-btn:active { background: rgba(255,255,255,0.35); }
+  .dpad-center {
+    width: 54px; height: 54px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .lantern-bg {
+    position: absolute;
+    font-size: 20px;
+    opacity: 0.25;
+    animation: floatLantern 4s ease-in-out infinite alternate;
+  }
+  @keyframes floatLantern { from { transform: translateY(0); } to { transform: translateY(-20px); } }
+  @keyframes glow { 0%, 100% { text-shadow: 0 0 20px #FFD700, 0 0 40px #FFD700; } 50% { text-shadow: 0 0 30px #FFF, 0 0 60px #FFD700; } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+  @keyframes shimmer { 0% { color: #FFD700; } 33% { color: #FF69B4; } 66% { color: #87CEEB; } 100% { color: #FFD700; } }
+
+  .hint { color: rgba(255,255,255,0.4); font-size: 11px; margin-top: 4px; font-family: sans-serif; }
+
+  /* Safe area padding for notched phones */
+  @supports (padding: env(safe-area-inset-bottom)) {
+    .dpad { padding-bottom: env(safe-area-inset-bottom); }
+  }
+</style>
+</head>
+<body>
+<div id="game"></div>
+
+<script>
+// ===== GAME ENGINE =====
+const TILE_TYPES = { F: 0, W: 1, L: 2, P: 3, X: 4 };
+const { F, W: WL, L, P, X } = TILE_TYPES;
+
+const LEVELS = [
+  {
+    name: "The Tower", subtitle: "Find the frying pan and escape!", emoji: "🏰",
+    bg: "#3d2b1f", wallFill: "#8B7355", wallTop: "#7A6245",
+    floorFill: "#DCC9A9", floorAlt: "#D4C1A1",
+    required: 4, startX: 2, startY: 2,
+    map: [
+      [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
+      [WL,F,F,F,F,WL,F,F,F,F,F,F,F,F,F,WL],
+      [WL,F,F,F,F,WL,F,F,L,F,F,F,L,F,F,WL],
+      [WL,F,F,F,F,F,F,F,F,F,F,F,F,F,F,WL],
+      [WL,F,L,F,F,F,F,F,F,F,WL,WL,WL,F,F,WL],
+      [WL,F,F,F,F,F,F,F,F,F,WL,F,F,F,F,WL],
+      [WL,F,F,F,F,WL,F,F,F,F,F,F,P,F,F,WL],
+      [WL,WL,WL,F,F,WL,WL,WL,F,F,WL,F,F,F,F,WL],
+      [WL,F,F,F,F,F,F,F,F,F,F,F,F,F,F,WL],
+      [WL,F,L,F,F,F,F,F,F,F,F,F,F,F,X,WL],
+      [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
+    ]
+  },
+  {
+    name: "The Forest", subtitle: "Find your way through the woods!", emoji: "🌲",
+    bg: "#1a3a1a", wallFill: "#2d5a27", wallTop: "#1e4a1e",
+    floorFill: "#7ab648", floorAlt: "#6da63e",
+    required: 5, startX: 1, startY: 1,
+    map: [
+      [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
+      [WL,F,F,F,WL,F,F,F,F,F,F,F,WL,F,F,WL],
+      [WL,F,L,F,WL,F,WL,F,L,F,WL,F,F,F,F,WL],
+      [WL,F,F,F,F,F,WL,F,F,F,WL,F,F,WL,F,WL],
+      [WL,WL,F,WL,F,F,F,F,WL,F,F,F,F,WL,F,WL],
+      [WL,F,F,WL,F,F,L,F,WL,F,F,F,F,F,F,WL],
+      [WL,F,F,F,F,WL,F,F,F,F,WL,WL,F,F,F,WL],
+      [WL,F,WL,F,F,WL,F,F,F,F,F,F,F,WL,F,WL],
+      [WL,F,WL,F,F,F,F,WL,L,F,F,L,F,WL,F,WL],
+      [WL,F,F,F,F,F,F,WL,F,F,F,F,F,F,X,WL],
+      [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
+    ]
+  },
+  {
+    name: "The Village", subtitle: "Explore the market and find the boat!", emoji: "🏘️",
+    bg: "#2a2040", wallFill: "#A0522D", wallTop: "#8B4513",
+    floorFill: "#D2B48C", floorAlt: "#C9AB82",
+    required: 5, startX: 1, startY: 5,
+    map: [
+      [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
+      [WL,F,F,F,F,F,F,F,F,F,F,F,F,F,L,WL],
+      [WL,F,WL,WL,F,F,WL,WL,F,F,WL,WL,F,F,F,WL],
+      [WL,F,WL,WL,F,F,WL,WL,F,F,WL,WL,F,F,F,WL],
+      [WL,F,F,F,F,F,F,F,F,F,F,F,F,WL,F,WL],
+      [WL,F,F,L,F,F,F,L,F,F,F,F,F,WL,F,WL],
+      [WL,F,F,F,F,F,F,F,F,F,F,F,F,F,F,WL],
+      [WL,F,WL,WL,F,F,WL,WL,F,F,WL,WL,F,F,F,WL],
+      [WL,F,WL,WL,F,F,WL,WL,L,F,WL,WL,F,L,F,WL],
+      [WL,F,F,F,F,F,F,F,F,F,F,F,F,F,X,WL],
+      [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
+    ]
+  },
+  {
+    name: "The Kingdom", subtitle: "Find Flynn and see the lanterns rise!", emoji: "👑",
+    bg: "#1a1a3a", wallFill: "#9090B0", wallTop: "#7070A0",
+    floorFill: "#C8B8D8", floorAlt: "#BEB0D0",
+    required: 6, startX: 1, startY: 5,
+    map: [
+      [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
+      [WL,F,F,F,WL,F,F,L,F,F,F,WL,F,F,F,WL],
+      [WL,F,L,F,WL,F,F,F,F,F,F,WL,F,L,F,WL],
+      [WL,F,F,F,WL,F,F,F,F,F,F,WL,F,F,F,WL],
+      [WL,F,F,F,F,F,F,F,F,F,F,F,F,F,F,WL],
+      [WL,F,F,F,F,F,F,L,F,F,F,F,F,F,F,WL],
+      [WL,F,F,F,F,F,F,F,F,F,F,F,F,F,F,WL],
+      [WL,F,F,F,WL,F,F,F,F,F,F,WL,F,F,F,WL],
+      [WL,F,L,F,WL,F,F,L,F,F,F,WL,F,F,F,WL],
+      [WL,F,F,F,WL,F,F,F,F,F,F,WL,F,F,X,WL],
+      [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
+    ]
+  }
+];
+
+const COLS = 16, ROWS = 11, MOVE_SPEED = 2.5;
+
+// State
+let screen = 'title';
+let currentLevel = 0;
+let celebrationTime = 0;
+let TILE, canvasW, canvasH, scaleFactor;
+const game = {
+  player: { x: 0, y: 0 }, pascal: { x: 0, y: 0 },
+  trail: [], lanterns: 0, hasPan: false,
+  items: [], particles: [], floatingTexts: [],
+  exitOpen: false, keys: {}, touchDir: null,
+  time: 0, facing: 'right',
+};
+let swipeStart = { x: 0, y: 0, active: false };
+
+const root = document.getElementById('game');
+let canvas, ctx;
+
+function isMobile() { return window.innerWidth < 768; }
+
+function calcSizes() {
+  const mob = isMobile();
+  const controlsH = mob ? 180 : 160;
+  const availW = window.innerWidth - (mob ? 16 : 40);
+  const availH = window.innerHeight - controlsH - (mob ? 20 : 40);
+  const tw = Math.floor(availW / COLS);
+  const th = Math.floor(availH / ROWS);
+  TILE = Math.max(16, Math.min(tw, th, 56));
+  canvasW = COLS * TILE;
+  canvasH = ROWS * TILE;
+  scaleFactor = TILE / 44;
+}
+
+function initLevel(lvl) {
+  calcSizes();
+  const data = LEVELS[lvl];
+  const s = scaleFactor;
+  game.player = { x: data.startX * TILE + TILE / 2, y: data.startY * TILE + TILE / 2 };
+  game.pascal = { x: data.startX * TILE + TILE / 2 - 20 * s, y: data.startY * TILE + TILE / 2 };
+  game.trail = []; game.lanterns = 0;
+  game.items = []; game.particles = []; game.floatingTexts = [];
+  game.exitOpen = false; game.time = 0; game.facing = 'right';
+  for (let r = 0; r < data.map.length; r++) {
+    for (let c = 0; c < data.map[r].length; c++) {
+      if (data.map[r][c] === L) game.items.push({ type: 'lantern', x: c * TILE + TILE / 2, y: r * TILE + TILE / 2, collected: false });
+      else if (data.map[r][c] === P) game.items.push({ type: 'pan', x: c * TILE + TILE / 2, y: r * TILE + TILE / 2, collected: false });
+    }
+  }
+}
+
+function isWall(px, py) {
+  const data = LEVELS[currentLevel];
+  const margin = 12 * scaleFactor;
+  const corners = [[px - margin, py - margin], [px + margin, py - margin], [px - margin, py + margin], [px + margin, py + margin]];
+  for (const [cx, cy] of corners) {
+    const col = Math.floor(cx / TILE), row = Math.floor(cy / TILE);
+    if (row < 0 || row >= data.map.length || col < 0 || col >= data.map[0].length) return true;
+    if (data.map[row][col] === WL) return true;
+  }
+  return false;
+}
+
+function spawnParticles(x, y, color, count = 8) {
+  for (let i = 0; i < count; i++) {
+    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
+    game.particles.push({
+      x, y,
+      vx: Math.cos(angle) * (1.5 + Math.random() * 2) * scaleFactor,
+      vy: Math.sin(angle) * (1.5 + Math.random() * 2) * scaleFactor,
+      life: 1, color, size: (3 + Math.random() * 4) * scaleFactor,
+    });
+  }
+}
+
+function spawnText(x, y, text) { game.floatingTexts.push({ x, y, text, life: 1 }); }
+
+// ===== RENDERING SCREENS =====
+function renderTitle() {
+  const mob = isMobile();
+  let html = `<div class="screen" style="background:linear-gradient(135deg,#2c1654 0%,#4a1a6b 30%,#1a0a30 100%)">`;
+  for (let i = 0; i < 12; i++) {
+    html += `<div class="lantern-bg" style="left:${10 + (i * 7) % 80}%;top:${15 + (i * 13) % 60}%;animation-delay:${i * 0.3}s;animation-duration:${3 + i % 3}s">🏮</div>`;
+  }
+  html += `
+    <div style="font-size:${mob ? 48 : 60}px;margin-bottom:8px">👸</div>
+    <h1 style="font-size:${mob ? 28 : 42}px;margin:0 0 5px;animation:glow 2s ease-in-out infinite;color:#FFD700;text-align:center;padding:0 20px;line-height:1.2">Rapunzel's<br>Great Adventure</h1>
+    <p style="color:#D2B4DE;font-size:${mob ? 14 : 16}px;margin:8px 0 4px">A game by Anna & Dad</p>
+    <div style="display:flex;gap:6px;margin-bottom:20px;font-size:${mob ? 16 : 20}px;animation:fadeUp 1s ease-out 0.5s both">
+      <span>🏰</span><span>→</span><span>🌲</span><span>→</span><span>🏘️</span><span>→</span><span>👑</span>
+    </div>
+    <button class="btn btn-purple" onclick="startGame()" style="font-size:${mob ? 18 : 22}px;animation:fadeUp 1s ease-out 0.8s both">✨ Start Adventure ✨</button>
+    <div style="margin-top:16px;color:#B39DDB;font-size:${mob ? 12 : 13}px;text-align:center;animation:fadeUp 1s ease-out 1.2s both;padding:0 20px;font-family:sans-serif">
+      ${mob ? 'Use buttons or swipe to move' : 'Arrow keys or on-screen buttons to move'}<br>
+      Collect all 🏮 lanterns to open the exit!
+    </div>
+  </div>`;
+  root.innerHTML = html;
+}
+
+function renderLevelComplete() {
+  const data = LEVELS[currentLevel];
+  const next = currentLevel < LEVELS.length - 1;
+  let html = `<div class="screen" style="background:linear-gradient(135deg,#1a3a2a,#2d5a3d)">
+    <div style="font-size:60px;animation:bounce 1s ease-in-out infinite">⭐</div>
+    <h2 style="font-size:${isMobile() ? 26 : 32}px;color:#FFD700;margin:10px 0">${data.name} Complete!</h2>
+    <p style="font-size:${isMobile() ? 16 : 18}px;color:#A5D6A7;text-align:center;padding:0 20px">Amazing job! You collected all the lanterns! 🏮</p>`;
+  if (next) {
+    html += `<p style="font-size:16px;color:#C8E6C9;margin:12px 0">Next up: ${LEVELS[currentLevel + 1].emoji} ${LEVELS[currentLevel + 1].name}</p>
+    <button class="btn btn-green" onclick="nextLevel()">Next Level →</button>`;
+  }
+  html += `</div>`;
+  root.innerHTML = html;
+}
+
+function renderVictory() {
+  let html = `<div class="screen" style="background:linear-gradient(135deg,#0a0a2e,#1a1a4e,#0a0a2e)">`;
+  for (let i = 0; i < 20; i++) {
+    const emojis = ["🎆","🎇","✨","🏮","⭐","💛","💜"];
+    html += `<div style="position:absolute;left:${5 + (i * 17 + celebrationTime * 3) % 90}%;top:${10 + Math.sin(i + celebrationTime * 0.1) * 30 + 20}%;font-size:${16 + (i % 4) * 6}px;opacity:0.7;transition:all 0.3s">${emojis[i % 7]}</div>`;
+  }
+  html += `
+    <div style="font-size:${isMobile() ? 50 : 70}px;animation:bounce 1.5s ease-in-out infinite;z-index:1">👸🤴</div>
+    <h1 style="font-size:${isMobile() ? 28 : 48}px;margin:12px 0 5px;animation:shimmer 3s linear infinite;text-align:center;z-index:1">You Found Flynn!</h1>
+    <p style="font-size:${isMobile() ? 18 : 22}px;color:#FFD700;z-index:1;text-align:center;padding:0 20px">🏮 The lanterns are rising! 🏮</p>
+    <p style="font-size:${isMobile() ? 14 : 16}px;color:#D2B4DE;margin:8px 0 16px;z-index:1;text-align:center">Rapunzel is home at last!<br>Congratulations Anna! 🎉</p>
+    <button class="btn btn-purple" onclick="startGame()" style="z-index:1">🔄 Play Again!</button>
+  </div>`;
+  root.innerHTML = html;
+}
+
+function renderPlaying() {
+  const data = LEVELS[currentLevel];
+  const mob = isMobile();
+  let html = `<div class="screen" style="background:${data.bg};justify-content:center;padding:${mob ? '8px' : '16px'}">
+    <canvas id="c" width="${canvasW}" height="${canvasH}" style="width:${canvasW}px;max-width:100%;height:auto;touch-action:none"></canvas>
+    <div class="dpad">
+      <button class="dpad-btn" style="grid-area:up" data-dir="up">▲</button>
+      <button class="dpad-btn" style="grid-area:left" data-dir="left">◀</button>
+      <div class="dpad-center" style="grid-area:center"></div>
+      <button class="dpad-btn" style="grid-area:right" data-dir="right">▶</button>
+      <button class="dpad-btn" style="grid-area:down" data-dir="down">▼</button>
+    </div>
+    <div class="hint">${mob ? 'Swipe on map or use buttons' : 'Arrow keys / WASD to move'}</div>
+  </div>`;
+  root.innerHTML = html;
+
+  canvas = document.getElementById('c');
+  ctx = canvas.getContext('2d');
+
+  // D-pad events
+  document.querySelectorAll('.dpad-btn').forEach(btn => {
+    const dir = btn.dataset.dir === 'down' ? 'downDir' : btn.dataset.dir;
+    btn.addEventListener('pointerdown', e => { e.preventDefault(); game.touchDir = dir; });
+    btn.addEventListener('pointerup', () => game.touchDir = null);
+    btn.addEventListener('pointerleave', () => game.touchDir = null);
+    btn.addEventListener('pointercancel', () => game.touchDir = null);
+  });
+
+  // Canvas swipe
+  canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const t = e.touches[0];
+    swipeStart = { x: t.clientX, y: t.clientY, active: true };
+  }, { passive: false });
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!swipeStart.active) return;
+    const t = e.touches[0];
+    const dx = t.clientX - swipeStart.x, dy = t.clientY - swipeStart.y;
+    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+      game.touchDir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'downDir' : 'up');
+    }
+  }, { passive: false });
+  canvas.addEventListener('touchend', e => { e.preventDefault(); swipeStart.active = false; game.touchDir = null; }, { passive: false });
+  canvas.addEventListener('touchcancel', () => { swipeStart.active = false; game.touchDir = null; });
+
+  requestAnimationFrame(gameLoop);
+}
+
+// ===== GAME LOOP =====
+function gameLoop() {
+  if (screen !== 'playing') return;
+  const g = game;
+  const data = LEVELS[currentLevel];
+  const s = scaleFactor;
+  const moveSpeed = MOVE_SPEED * s;
+  g.time++;
+
+  // Input
+  let dx = 0, dy = 0;
+  if (g.keys['ArrowLeft'] || g.keys['a']) dx -= 1;
+  if (g.keys['ArrowRight'] || g.keys['d']) dx += 1;
+  if (g.keys['ArrowUp'] || g.keys['w']) dy -= 1;
+  if (g.keys['ArrowDown'] || g.keys['s']) dy += 1;
+  if (g.touchDir === 'left') dx = -1;
+  if (g.touchDir === 'right') dx = 1;
+  if (g.touchDir === 'up') dy = -1;
+  if (g.touchDir === 'downDir') dy = 1;
+
+  if (dx !== 0 || dy !== 0) {
+    if (Math.abs(dx) > Math.abs(dy)) g.facing = dx > 0 ? 'right' : 'left';
+  }
+  if (dx !== 0 && dy !== 0) { dx *= 0.707; dy *= 0.707; }
+
+  const nx = g.player.x + dx * moveSpeed, ny = g.player.y + dy * moveSpeed;
+  if (!isWall(nx, g.player.y)) g.player.x = nx;
+  if (!isWall(g.player.x, ny)) g.player.y = ny;
+
+  // Trail
+  if (g.time % 2 === 0) { g.trail.push({ x: g.player.x, y: g.player.y }); if (g.trail.length > 30) g.trail.shift(); }
+
+  // Pascal
+  if (g.trail.length > 15) {
+    const t = g.trail[g.trail.length - 15];
+    g.pascal.x += (t.x - g.pascal.x) * 0.08;
+    g.pascal.y += (t.y - g.pascal.y) * 0.08;
+  }
+
+  // Collect
+  const cd = 22 * s;
+  for (const item of g.items) {
+    if (item.collected) continue;
+    if (Math.hypot(item.x - g.player.x, item.y - g.player.y) < cd) {
+      item.collected = true;
+      if (item.type === 'lantern') {
+        g.lanterns++;
+        spawnParticles(item.x, item.y, '#FFD700', 12);
+        spawnText(item.x, item.y - 10 * s, '✨');
+        if (g.lanterns >= data.required) { g.exitOpen = true; spawnText(g.player.x, g.player.y - 30 * s, 'Exit open! 🚪'); }
+      } else if (item.type === 'pan') {
+        g.hasPan = true;
+        spawnParticles(item.x, item.y, '#B8860B', 10);
+        spawnText(item.x, item.y - 10 * s, '🍳 Got it!');
+      }
+    }
+  }
+
+  // Exit
+  if (g.exitOpen) {
+    for (let r = 0; r < data.map.length; r++) {
+      for (let c = 0; c < data.map[r].length; c++) {
+        if (data.map[r][c] === X) {
+          const ex = c * TILE + TILE / 2, ey = r * TILE + TILE / 2;
+          if (Math.hypot(ex - g.player.x, ey - g.player.y) < cd) {
+            if (currentLevel < LEVELS.length - 1) { screen = 'levelComplete'; renderLevelComplete(); return; }
+            else { screen = 'victory'; celebrationTime = 0; startVictoryAnim(); renderVictory(); return; }
+          }
+        }
+      }
+    }
+  }
+
+  // Particles
+  g.particles = g.particles.filter(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.05 * s; p.life -= 0.02; return p.life > 0; });
+  g.floatingTexts = g.floatingTexts.filter(ft => { ft.y -= 0.5 * s; ft.life -= 0.015; return ft.life > 0; });
+
+  // ===== DRAW =====
+  canvas.width = canvasW; canvas.height = canvasH;
+  ctx.fillStyle = data.bg; ctx.fillRect(0, 0, canvasW, canvasH);
+
+  // Tiles
+  for (let r = 0; r < data.map.length; r++) {
+    for (let c = 0; c < data.map[r].length; c++) {
+      const tx = c * TILE, ty = r * TILE, tile = data.map[r][c];
+      if (tile === WL) {
+        ctx.fillStyle = data.wallFill; ctx.fillRect(tx, ty, TILE, TILE);
+        ctx.fillStyle = data.wallTop; ctx.fillRect(tx, ty, TILE, 8 * s);
+        ctx.strokeStyle = data.wallTop; ctx.lineWidth = 0.5;
+        ctx.strokeRect(tx + 2, ty + 10 * s, TILE / 2 - 3, TILE / 3 - 2);
+        ctx.strokeRect(tx + TILE / 2 + 1, ty + 10 * s, TILE / 2 - 3, TILE / 3 - 2);
+      } else {
+        ctx.fillStyle = (r + c) % 2 === 0 ? data.floorFill : data.floorAlt;
+        ctx.fillRect(tx, ty, TILE, TILE);
+      }
+      if (tile === X) {
+        if (g.exitOpen) {
+          const pulse = Math.sin(g.time * 0.08) * 0.3 + 0.7;
+          ctx.fillStyle = `rgba(100,255,100,${pulse * 0.4})`; ctx.fillRect(tx, ty, TILE, TILE);
+          ctx.fillStyle = '#4CAF50'; ctx.font = `bold ${Math.round(11 * s)}px sans-serif`; ctx.textAlign = 'center';
+          ctx.fillText('EXIT', tx + TILE / 2, ty + TILE / 2 - 4 * s);
+          ctx.fillText('→', tx + TILE / 2, ty + TILE / 2 + 10 * s);
+        } else {
+          ctx.fillStyle = 'rgba(150,80,80,0.3)'; ctx.fillRect(tx, ty, TILE, TILE);
+          ctx.fillStyle = '#999'; ctx.font = `${Math.round(9 * s)}px sans-serif`; ctx.textAlign = 'center';
+          ctx.fillText('🔒', tx + TILE / 2, ty + TILE / 2 + 4 * s);
+        }
+      }
+    }
+  }
+
+  // Items
+  for (const item of g.items) {
+    if (item.collected) continue;
+    if (item.type === 'lantern') {
+      const glow = ctx.createRadialGradient(item.x, item.y, 2, item.x, item.y, 20 * s);
+      glow.addColorStop(0, 'rgba(255,215,0,0.4)'); glow.addColorStop(1, 'rgba(255,215,0,0)');
+      ctx.fillStyle = glow; const gr = 20 * s; ctx.fillRect(item.x - gr, item.y - gr, gr * 2, gr * 2);
+      const bob = Math.sin(g.time * 0.05 + item.x) * 2 * s;
+      ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(item.x, item.y + bob, 8 * s, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#FFF8DC'; ctx.beginPath(); ctx.arc(item.x, item.y + bob - s, 4 * s, 0, Math.PI * 2); ctx.fill();
+    } else if (item.type === 'pan') {
+      ctx.fillStyle = '#4a4a4a'; ctx.beginPath(); ctx.arc(item.x, item.y, 10 * s, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#6a6a6a'; ctx.beginPath(); ctx.arc(item.x, item.y, 7 * s, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#4a4a4a'; ctx.lineWidth = 3 * s;
+      ctx.beginPath(); ctx.moveTo(item.x + 8 * s, item.y); ctx.lineTo(item.x + 18 * s, item.y - 3 * s); ctx.stroke();
+      const sp = Math.sin(g.time * 0.1) * 0.5 + 0.5;
+      ctx.fillStyle = `rgba(255,255,200,${sp})`; ctx.font = `${Math.round(12 * s)}px sans-serif`; ctx.textAlign = 'center';
+      ctx.fillText('✦', item.x, item.y - 14 * s);
+    }
+  }
+
+  // Hair
+  if (g.trail.length > 2) {
+    ctx.strokeStyle = '#F4D03F'; ctx.lineWidth = 5 * s; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(g.trail[0].x, g.trail[0].y);
+    for (let i = 1; i < g.trail.length; i++) ctx.lineTo(g.trail[i].x, g.trail[i].y);
+    ctx.lineTo(g.player.x, g.player.y); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,248,200,0.5)'; ctx.lineWidth = 2 * s;
+    ctx.beginPath(); ctx.moveTo(g.trail[0].x, g.trail[0].y);
+    for (let i = 1; i < g.trail.length; i++) ctx.lineTo(g.trail[i].x, g.trail[i].y);
+    ctx.lineTo(g.player.x, g.player.y); ctx.stroke();
+  }
+
+  // Pascal
+  const pb = Math.sin(g.time * 0.1) * s;
+  ctx.fillStyle = '#50C878'; ctx.beginPath(); ctx.ellipse(g.pascal.x, g.pascal.y + pb, 7 * s, 5 * s, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#2d6a2d'; ctx.beginPath();
+  ctx.arc(g.pascal.x - 3 * s, g.pascal.y + pb - 2 * s, 1.5 * s, 0, Math.PI * 2);
+  ctx.arc(g.pascal.x + 3 * s, g.pascal.y + pb - 2 * s, 1.5 * s, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#50C878'; ctx.lineWidth = 2 * s;
+  ctx.beginPath(); ctx.moveTo(g.pascal.x - 6 * s, g.pascal.y + pb);
+  ctx.quadraticCurveTo(g.pascal.x - 14 * s, g.pascal.y + pb - 8 * s, g.pascal.x - 10 * s, g.pascal.y + pb - 12 * s); ctx.stroke();
+
+  // Rapunzel
+  const px = g.player.x, py = g.player.y;
+  const breathe = Math.sin(g.time * 0.06) * s;
+  const flip = g.facing === 'left' ? -1 : 1;
+  ctx.save(); ctx.translate(px, py); ctx.scale(flip, 1);
+
+  // Dress
+  ctx.fillStyle = '#9B59B6';
+  ctx.beginPath(); ctx.moveTo(-10 * s, -2 * s); ctx.lineTo(10 * s, -2 * s);
+  ctx.lineTo(13 * s, (14 + breathe) * s); ctx.lineTo(-13 * s, (14 + breathe) * s); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#8E44AD';
+  ctx.beginPath(); ctx.moveTo(-5 * s, 2 * s); ctx.lineTo(5 * s, 2 * s);
+  ctx.lineTo(8 * s, (14 + breathe) * s); ctx.lineTo(-8 * s, (14 + breathe) * s); ctx.closePath(); ctx.fill();
+  // Lace
+  ctx.strokeStyle = '#D2B4DE'; ctx.lineWidth = 1;
+  const lY = (14 + breathe) * s;
+  ctx.beginPath(); ctx.moveTo(-13 * s, lY);
+  for (let i = 0; i < 6; i++) { ctx.lineTo(-13 * s + i * 4.5 * s + 2 * s, lY - 2 * s); ctx.lineTo(-13 * s + (i + 1) * 4.5 * s, lY); }
+  ctx.stroke();
+
+  // Head
+  ctx.fillStyle = '#FFDAB9'; ctx.beginPath(); ctx.arc(0, -8 * s, 9 * s, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#F4D03F'; ctx.beginPath(); ctx.arc(0, -11 * s, 8 * s, Math.PI, Math.PI * 2); ctx.fill();
+  ctx.fillRect(-8 * s, -12 * s, 2 * s, 6 * s); ctx.fillRect(6 * s, -12 * s, 2 * s, 6 * s);
+  // Eyes
+  ctx.fillStyle = '#2ECC71'; ctx.beginPath();
+  ctx.arc(-3 * s, -8 * s, 2 * s, 0, Math.PI * 2); ctx.arc(3 * s, -8 * s, 2 * s, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'white'; ctx.beginPath();
+  ctx.arc(-2.5 * s, -8.5 * s, 0.8 * s, 0, Math.PI * 2); ctx.arc(3.5 * s, -8.5 * s, 0.8 * s, 0, Math.PI * 2); ctx.fill();
+  // Smile
+  ctx.strokeStyle = '#C0392B'; ctx.lineWidth = s; ctx.beginPath(); ctx.arc(0, -5 * s, 3 * s, 0.1 * Math.PI, 0.9 * Math.PI); ctx.stroke();
+  // Cheeks
+  ctx.fillStyle = 'rgba(255,150,150,0.3)'; ctx.beginPath();
+  ctx.arc(-6 * s, -6 * s, 2.5 * s, 0, Math.PI * 2); ctx.arc(6 * s, -6 * s, 2.5 * s, 0, Math.PI * 2); ctx.fill();
+
+  // Pan
+  if (g.hasPan) {
+    const sw = Math.sin(g.time * 0.15) * 0.3;
+    ctx.save(); ctx.translate(12 * s, -2 * s); ctx.rotate(sw - 0.5);
+    ctx.fillStyle = '#555'; ctx.beginPath(); ctx.arc(0, 0, 6 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#555'; ctx.lineWidth = 2 * s;
+    ctx.beginPath(); ctx.moveTo(5 * s, 0); ctx.lineTo(12 * s, -4 * s); ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+
+  // Particles
+  for (const p of g.particles) {
+    ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Floating text
+  for (const ft of g.floatingTexts) {
+    ctx.globalAlpha = ft.life; ctx.fillStyle = 'white';
+    ctx.font = `bold ${Math.round(14 * s)}px sans-serif`; ctx.textAlign = 'center';
+    ctx.fillText(ft.text, ft.x, ft.y);
+  }
+  ctx.globalAlpha = 1;
+
+  // HUD
+  const hh = Math.round(30 * s);
+  ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(0, 0, canvasW, hh);
+  const fs = Math.max(10, Math.round(13 * s));
+  ctx.fillStyle = 'white'; ctx.font = `bold ${fs}px sans-serif`;
+  ctx.textAlign = 'left'; ctx.fillText(`${data.emoji} ${data.name}`, 8 * s, hh * 0.7);
+  ctx.textAlign = 'right'; ctx.fillText(`🏮 ${g.lanterns}/${data.required}`, canvasW - 8 * s, hh * 0.7);
+  if (g.hasPan) ctx.fillText('🍳', canvasW - 60 * s, hh * 0.7);
+  ctx.textAlign = 'center';
+  if (!g.exitOpen) {
+    ctx.fillStyle = '#FFD700'; ctx.font = `${Math.max(9, Math.round(11 * s))}px sans-serif`;
+    ctx.fillText(`Collect ${data.required - g.lanterns} more lanterns!`, canvasW / 2, hh * 0.7);
+  } else {
+    ctx.fillStyle = Math.sin(g.time * 0.1) > 0 ? '#4CAF50' : '#8BC34A';
+    ctx.font = `bold ${Math.max(10, Math.round(12 * s))}px sans-serif`;
+    ctx.fillText('✨ Find the exit! ✨', canvasW / 2, hh * 0.7);
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+// ===== NAVIGATION =====
+let victoryInterval = null;
+
+function startGame() {
+  currentLevel = 0; game.hasPan = false;
+  screen = 'playing';
+  calcSizes(); initLevel(0); renderPlaying();
+}
+
+function nextLevel() {
+  currentLevel++;
+  screen = 'playing';
+  calcSizes(); initLevel(currentLevel); renderPlaying();
+}
+
+function startVictoryAnim() {
+  if (victoryInterval) clearInterval(victoryInterval);
+  victoryInterval = setInterval(() => {
+    celebrationTime++;
+    if (screen === 'victory') renderVictory();
+    else clearInterval(victoryInterval);
+  }, 80);
+}
+
+// ===== KEYBOARD =====
+window.addEventListener('keydown', e => {
+  if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
+  game.keys[e.key] = true;
+}, { passive: false });
+window.addEventListener('keyup', e => { game.keys[e.key] = false; });
+
+// Prevent pinch zoom globally
+document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('gesturechange', e => e.preventDefault());
+
+// Handle resize
+window.addEventListener('resize', () => {
+  if (screen === 'playing') {
+    calcSizes(); initLevel(currentLevel); renderPlaying();
+  }
+});
+
+// ===== SERVICE WORKER (inline for offline) =====
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'rapunzel-v1';
+    self.addEventListener('install', e => { self.skipWaiting(); });
+    self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+    self.addEventListener('fetch', e => {
+      e.respondWith(
+        caches.match(e.request).then(r => r || fetch(e.request).then(res => {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+          return res;
+        }).catch(() => caches.match(e.request)))
+      );
+    });
+  `;
+  const blob = new Blob([swCode], { type: 'application/javascript' });
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+}
+
+// ===== BOOT =====
+calcSizes();
+renderTitle();
+</script>
+</body>
+</html>
