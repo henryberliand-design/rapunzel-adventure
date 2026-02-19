@@ -50,8 +50,8 @@
   }
 
   .btn {
-    padding: 14px 40px;
-    font-size: 20px;
+    padding: 16px 44px;
+    font-size: 22px;
     font-family: Georgia, serif;
     color: white;
     border-radius: 30px;
@@ -59,6 +59,8 @@
     border: 3px solid;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
+    min-width: 64px;
+    min-height: 64px;
   }
   .btn-purple {
     background: linear-gradient(135deg, #9B59B6, #8E44AD);
@@ -70,6 +72,17 @@
     border-color: #81C784;
     box-shadow: 0 4px 20px rgba(76, 175, 80, 0.4);
   }
+  .btn-gold {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    border-color: #FFF8DC;
+    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.5);
+    color: #2c1654;
+  }
+  .btn-small {
+    padding: 10px 24px;
+    font-size: 16px;
+    min-height: 48px;
+  }
 
   .dpad {
     display: grid;
@@ -77,24 +90,24 @@
       '. up .'
       'left center right'
       '. down .';
-    gap: 4px;
+    gap: 6px;
     margin-top: 8px;
   }
   .dpad-btn {
-    width: 54px; height: 54px;
-    border-radius: 12px;
-    border: 2px solid rgba(255,255,255,0.3);
-    background: rgba(255,255,255,0.15);
+    width: 64px; height: 64px;
+    border-radius: 14px;
+    border: 2px solid rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.18);
     color: white;
-    font-size: 20px;
+    font-size: 22px;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
     touch-action: none;
     -webkit-tap-highlight-color: transparent;
   }
-  .dpad-btn:active { background: rgba(255,255,255,0.35); }
+  .dpad-btn:active { background: rgba(255,255,255,0.4); }
   .dpad-center {
-    width: 54px; height: 54px;
+    width: 64px; height: 64px;
     border-radius: 50%;
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.1);
@@ -102,7 +115,7 @@
 
   .lantern-bg {
     position: absolute;
-    font-size: 20px;
+    font-size: 22px;
     opacity: 0.25;
     animation: floatLantern 4s ease-in-out infinite alternate;
   }
@@ -111,10 +124,54 @@
   @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
   @keyframes shimmer { 0% { color: #FFD700; } 33% { color: #FF69B4; } 66% { color: #87CEEB; } 100% { color: #FFD700; } }
+  @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.8; } }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 
-  .hint { color: rgba(255,255,255,0.4); font-size: 11px; margin-top: 4px; font-family: sans-serif; }
+  .hint { color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 6px; font-family: sans-serif; }
 
-  /* Safe area padding for notched phones */
+  /* Level select grid */
+  .level-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 0 20px;
+    max-width: 400px;
+    width: 100%;
+  }
+  .level-card {
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    border: 3px solid rgba(255,255,255,0.2);
+    transition: transform 0.2s, box-shadow 0.2s;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .level-card:active { transform: scale(0.95); }
+  .level-card.locked { opacity: 0.4; pointer-events: none; }
+  .level-card.completed { border-color: #FFD700; }
+
+  .gallery-canvas { border-radius: 12px; touch-action: none; }
+
+  /* Closet / dress-up */
+  .closet-grid {
+    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+    padding: 10px;
+  }
+  .closet-item {
+    width: 60px; height: 60px; border-radius: 12px;
+    border: 2px solid rgba(255,255,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; cursor: pointer;
+    background: rgba(255,255,255,0.1);
+  }
+  .closet-item.selected { border-color: #FFD700; background: rgba(255,215,0,0.2); }
+  .closet-item.locked { opacity: 0.3; pointer-events: none; }
+
   @supports (padding: env(safe-area-inset-bottom)) {
     .dpad { padding-bottom: env(safe-area-inset-bottom); }
   }
@@ -124,104 +181,344 @@
 <div id="game"></div>
 
 <script>
-// ===== GAME ENGINE =====
-const TILE_TYPES = { F: 0, W: 1, L: 2, P: 3, X: 4 };
-const { F, W: WL, L, P, X } = TILE_TYPES;
+'use strict';
 
+// ===== SAVE STATE =====
+const DEFAULT_SAVE = {
+  levelsCompleted: [],
+  totalLanterns: 0,
+  currentLevel: 0,
+  dressColor: 'purple',
+  hairFlower: 'none',
+  pascalPattern: 'solid',
+  unlockedDresses: ['purple'],
+  unlockedFlowers: ['none'],
+  unlockedPatterns: ['solid'],
+  galleryLanterns: [],
+  hiddenFound: [],
+  freePlayUnlocked: false,
+  musicOn: true,
+  sfxOn: true,
+};
+
+let save = loadSave();
+function loadSave() {
+  try {
+    const d = JSON.parse(localStorage.getItem('rapunzelSave'));
+    return d ? { ...DEFAULT_SAVE, ...d } : { ...DEFAULT_SAVE };
+  } catch(e) { return { ...DEFAULT_SAVE }; }
+}
+function writeSave() {
+  try { localStorage.setItem('rapunzelSave', JSON.stringify(save)); } catch(e) {}
+}
+
+// ===== AUDIO ENGINE =====
+let audioCtx = null;
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playTone(freq, duration, type, vol, ramp) {
+  if (!save.sfxOn || !audioCtx) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = type || 'sine';
+  o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  if (ramp) o.frequency.exponentialRampToValueAtTime(ramp, audioCtx.currentTime + duration * 0.8);
+  g.gain.setValueAtTime(vol || 0.15, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(); o.stop(audioCtx.currentTime + duration);
+}
+
+function playNoise(duration, filterFreq, vol) {
+  if (!save.sfxOn || !audioCtx) return;
+  const bufferSize = audioCtx.sampleRate * duration;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+  const src = audioCtx.createBufferSource();
+  src.buffer = buffer;
+  const filt = audioCtx.createBiquadFilter();
+  filt.type = 'lowpass';
+  filt.frequency.value = filterFreq || 400;
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(vol || 0.08, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  src.connect(filt); filt.connect(g); g.connect(audioCtx.destination);
+  src.start(); src.stop(audioCtx.currentTime + duration);
+}
+
+const SFX = {
+  footstep() { playNoise(0.05, 350, 0.04); },
+  wallBump() { playTone(150, 0.15, 'sine', 0.1); },
+  lanternCollect() {
+    playTone(880, 0.3, 'sine', 0.15, 1760);
+    setTimeout(() => playTone(1320, 0.2, 'sine', 0.1, 1760), 100);
+  },
+  panPickup() {
+    playNoise(0.08, 2000, 0.12);
+    playTone(300, 0.15, 'triangle', 0.12);
+  },
+  exitOpen() {
+    playTone(440, 0.3, 'sawtooth', 0.08, 220);
+    setTimeout(() => playTone(660, 0.4, 'sine', 0.12, 880), 200);
+  },
+  levelComplete() {
+    const notes = [523, 659, 784, 1047];
+    notes.forEach((n, i) => setTimeout(() => playTone(n, 0.4, 'sine', 0.12), i * 120));
+  },
+  collectHidden() {
+    playTone(1200, 0.2, 'sine', 0.1, 2400);
+    setTimeout(() => playTone(1600, 0.15, 'sine', 0.08), 80);
+  },
+  uiTap() { playTone(600, 0.08, 'sine', 0.06); },
+  pascalChirp() { playTone(1000, 0.1, 'sine', 0.06, 1400); },
+  hint() { playTone(700, 0.15, 'sine', 0.05, 900); },
+};
+
+// ===== MUSIC ENGINE =====
+let musicInterval = null;
+let musicPlaying = false;
+
+const SCALES = {
+  tower:   [261, 329, 392, 523, 587, 659, 784], // C major gentle
+  forest:  [293, 349, 440, 523, 587, 698, 784], // D mixolydian
+  village: [329, 392, 493, 587, 659, 784, 880], // E major bright
+  kingdom: [261, 311, 392, 466, 523, 622, 784], // C minor majestic
+};
+
+function startMusic(levelIdx) {
+  stopMusic();
+  if (!save.musicOn || !audioCtx) return;
+  const keys = ['tower', 'forest', 'village', 'kingdom'];
+  const tempos = [850, 670, 545, 1000];
+  const scale = SCALES[keys[Math.min(levelIdx, 3)]] || SCALES.tower;
+  const tempo = tempos[Math.min(levelIdx, 3)];
+  let noteIdx = 0;
+  let lastNote = 0;
+
+  musicInterval = setInterval(() => {
+    if (!save.musicOn || !audioCtx) { stopMusic(); return; }
+    // Simple algorithmic melody: walk the scale with occasional jumps
+    const jump = Math.random();
+    if (jump < 0.5) noteIdx = (noteIdx + 1) % scale.length;
+    else if (jump < 0.7) noteIdx = (noteIdx + 2) % scale.length;
+    else if (jump < 0.85) noteIdx = Math.max(0, noteIdx - 1);
+    else noteIdx = Math.floor(Math.random() * scale.length);
+
+    // Avoid same note twice
+    if (scale[noteIdx] === lastNote) noteIdx = (noteIdx + 1) % scale.length;
+    lastNote = scale[noteIdx];
+
+    // Rest ~20% of the time
+    if (Math.random() < 0.2) return;
+
+    const freq = scale[noteIdx];
+    const dur = (tempo / 1000) * (0.5 + Math.random() * 0.5);
+    playTone(freq, dur, levelIdx === 3 ? 'triangle' : 'sine', 0.04);
+
+    // Occasional harmony
+    if (Math.random() < 0.3) {
+      const harm = scale[(noteIdx + 2) % scale.length];
+      playTone(harm, dur * 0.8, 'sine', 0.02);
+    }
+  }, tempo);
+  musicPlaying = true;
+}
+
+function stopMusic() {
+  if (musicInterval) { clearInterval(musicInterval); musicInterval = null; }
+  musicPlaying = false;
+}
+
+// ===== TILE TYPES =====
+const T = { F: 0, W: 1, L: 2, P: 3, X: 4, H: 5 }; // H = hidden collectible
+const { F, W: WL, L, P, X, H } = T;
+
+// ===== LEVELS =====
 const LEVELS = [
   {
-    name: "The Tower", subtitle: "Find the frying pan and escape!", emoji: "🏰",
+    name: "The Tower", emoji: "🏰",
     bg: "#3d2b1f", wallFill: "#8B7355", wallTop: "#7A6245",
     floorFill: "#DCC9A9", floorAlt: "#D4C1A1",
     required: 4, startX: 2, startY: 2,
+    narrative: { enter: "When will my life begin?", exit: "I can't believe I did this!" },
+    reward: { type: 'dress', value: 'pink', label: 'Pink Dress' },
     map: [
       [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
-      [WL,F,F,F,F,WL,F,F,F,F,F,F,F,F,F,WL],
-      [WL,F,F,F,F,WL,F,F,L,F,F,F,L,F,F,WL],
-      [WL,F,F,F,F,F,F,F,F,F,F,F,F,F,F,WL],
-      [WL,F,L,F,F,F,F,F,F,F,WL,WL,WL,F,F,WL],
-      [WL,F,F,F,F,F,F,F,F,F,WL,F,F,F,F,WL],
-      [WL,F,F,F,F,WL,F,F,F,F,F,F,P,F,F,WL],
-      [WL,WL,WL,F,F,WL,WL,WL,F,F,WL,F,F,F,F,WL],
-      [WL,F,F,F,F,F,F,F,F,F,F,F,F,F,F,WL],
-      [WL,F,L,F,F,F,F,F,F,F,F,F,F,F,X,WL],
+      [WL,F, F, F, F, WL,F, F, F, F, F, F, F, F, F, WL],
+      [WL,F, F, F, F, WL,F, F, L, F, F, F, L, F, F, WL],
+      [WL,F, F, F, F, F, F, F, F, F, F, F, F, F, H, WL],
+      [WL,F, L, F, F, F, F, F, F, F, WL,WL,WL,F, F, WL],
+      [WL,F, F, F, F, F, F, F, F, F, WL,F, F, F, F, WL],
+      [WL,H, F, F, F, WL,F, F, F, F, F, F, P, F, F, WL],
+      [WL,WL,WL,F, F, WL,WL,WL,F, F, WL,F, F, F, F, WL],
+      [WL,F, F, F, F, F, F, F, F, F, F, F, F, F, F, WL],
+      [WL,F, L, F, F, F, F, H, F, F, F, F, F, F, X, WL],
       [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
     ]
   },
   {
-    name: "The Forest", subtitle: "Find your way through the woods!", emoji: "🌲",
+    name: "The Forest", emoji: "🌲",
     bg: "#1a3a1a", wallFill: "#2d5a27", wallTop: "#1e4a1e",
     floorFill: "#7ab648", floorAlt: "#6da63e",
     required: 5, startX: 1, startY: 1,
+    narrative: { enter: "Best day ever!", exit: "I could get used to this!" },
+    reward: { type: 'flower', value: 'daisy', label: 'Daisy' },
     map: [
       [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
-      [WL,F,F,F,WL,F,F,F,F,F,F,F,WL,F,F,WL],
-      [WL,F,L,F,WL,F,WL,F,L,F,WL,F,F,F,F,WL],
-      [WL,F,F,F,F,F,WL,F,F,F,WL,F,F,WL,F,WL],
-      [WL,WL,F,WL,F,F,F,F,WL,F,F,F,F,WL,F,WL],
-      [WL,F,F,WL,F,F,L,F,WL,F,F,F,F,F,F,WL],
-      [WL,F,F,F,F,WL,F,F,F,F,WL,WL,F,F,F,WL],
-      [WL,F,WL,F,F,WL,F,F,F,F,F,F,F,WL,F,WL],
-      [WL,F,WL,F,F,F,F,WL,L,F,F,L,F,WL,F,WL],
-      [WL,F,F,F,F,F,F,WL,F,F,F,F,F,F,X,WL],
+      [WL,F, F, F, WL,F, F, F, F, F, F, F, WL,F, F, WL],
+      [WL,F, L, F, WL,F, WL,F, L, F, WL,F, F, F, H, WL],
+      [WL,F, F, F, F, F, WL,F, F, F, WL,F, F, WL,F, WL],
+      [WL,WL,F, WL,F, F, F, F, WL,F, F, F, F, WL,F, WL],
+      [WL,F, F, WL,F, F, L, F, WL,F, F, H, F, F, F, WL],
+      [WL,F, F, F, F, WL,F, F, F, F, WL,WL,F, F, F, WL],
+      [WL,F, WL,F, F, WL,F, F, F, F, F, F, F, WL,F, WL],
+      [WL,F, WL,F, F, F, F, WL,L, F, F, L, F, WL,F, WL],
+      [WL,H, F, F, F, F, F, WL,F, F, F, F, F, F, X, WL],
       [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
     ]
   },
   {
-    name: "The Village", subtitle: "Explore the market and find the boat!", emoji: "🏘️",
+    name: "The Village", emoji: "🏘️",
     bg: "#2a2040", wallFill: "#A0522D", wallTop: "#8B4513",
     floorFill: "#D2B48C", floorAlt: "#C9AB82",
     required: 5, startX: 1, startY: 5,
+    narrative: { enter: "Look at everything!", exit: "This is the best day!" },
+    reward: { type: 'dress', value: 'blue', label: 'Blue Dress' },
     map: [
       [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
-      [WL,F,F,F,F,F,F,F,F,F,F,F,F,F,L,WL],
-      [WL,F,WL,WL,F,F,WL,WL,F,F,WL,WL,F,F,F,WL],
-      [WL,F,WL,WL,F,F,WL,WL,F,F,WL,WL,F,F,F,WL],
-      [WL,F,F,F,F,F,F,F,F,F,F,F,F,WL,F,WL],
-      [WL,F,F,L,F,F,F,L,F,F,F,F,F,WL,F,WL],
-      [WL,F,F,F,F,F,F,F,F,F,F,F,F,F,F,WL],
-      [WL,F,WL,WL,F,F,WL,WL,F,F,WL,WL,F,F,F,WL],
-      [WL,F,WL,WL,F,F,WL,WL,L,F,WL,WL,F,L,F,WL],
-      [WL,F,F,F,F,F,F,F,F,F,F,F,F,F,X,WL],
+      [WL,F, F, F, F, F, F, F, F, F, F, F, F, F, L, WL],
+      [WL,F, WL,WL,F, F, WL,WL,F, F, WL,WL,F, F, H, WL],
+      [WL,F, WL,WL,F, F, WL,WL,F, F, WL,WL,F, F, F, WL],
+      [WL,F, F, F, F, F, F, F, F, F, F, F, F, WL,F, WL],
+      [WL,F, F, L, F, F, F, L, F, F, H, F, F, WL,F, WL],
+      [WL,F, F, F, F, F, F, F, F, F, F, F, F, F, F, WL],
+      [WL,F, WL,WL,F, F, WL,WL,F, F, WL,WL,F, F, F, WL],
+      [WL,H, WL,WL,F, F, WL,WL,L, F, WL,WL,F, L, F, WL],
+      [WL,F, F, F, F, F, F, F, F, F, F, F, F, F, X, WL],
       [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
     ]
   },
   {
-    name: "The Kingdom", subtitle: "Find Flynn and see the lanterns rise!", emoji: "👑",
+    name: "The Kingdom", emoji: "👑",
     bg: "#1a1a3a", wallFill: "#9090B0", wallTop: "#7070A0",
     floorFill: "#C8B8D8", floorAlt: "#BEB0D0",
     required: 6, startX: 1, startY: 5,
+    narrative: { enter: "I can see the lights!", exit: "You were my new dream." },
+    reward: { type: 'flower', value: 'crown', label: 'Golden Crown' },
     map: [
       [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
-      [WL,F,F,F,WL,F,F,L,F,F,F,WL,F,F,F,WL],
-      [WL,F,L,F,WL,F,F,F,F,F,F,WL,F,L,F,WL],
-      [WL,F,F,F,WL,F,F,F,F,F,F,WL,F,F,F,WL],
-      [WL,F,F,F,F,F,F,F,F,F,F,F,F,F,F,WL],
-      [WL,F,F,F,F,F,F,L,F,F,F,F,F,F,F,WL],
-      [WL,F,F,F,F,F,F,F,F,F,F,F,F,F,F,WL],
-      [WL,F,F,F,WL,F,F,F,F,F,F,WL,F,F,F,WL],
-      [WL,F,L,F,WL,F,F,L,F,F,F,WL,F,F,F,WL],
-      [WL,F,F,F,WL,F,F,F,F,F,F,WL,F,F,X,WL],
+      [WL,F, F, F, WL,F, F, L, F, F, F, WL,F, F, H, WL],
+      [WL,F, L, F, WL,F, F, F, F, F, F, WL,F, L, F, WL],
+      [WL,F, F, F, WL,F, F, F, F, F, F, WL,F, F, F, WL],
+      [WL,F, H, F, F, F, F, F, F, F, F, F, F, F, F, WL],
+      [WL,F, F, F, F, F, F, L, F, F, F, F, F, H, F, WL],
+      [WL,F, F, F, F, F, F, F, F, F, F, F, F, F, F, WL],
+      [WL,F, F, F, WL,F, F, F, F, F, F, WL,F, F, F, WL],
+      [WL,F, L, F, WL,F, F, L, F, F, F, WL,F, F, F, WL],
+      [WL,F, F, F, WL,F, F, F, F, F, F, WL,F, F, X, WL],
       [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
     ]
-  }
+  },
+  // Bonus levels
+  {
+    name: "Snuggly Duckling", emoji: "🍺",
+    bg: "#3a2a1a", wallFill: "#6B4226", wallTop: "#5A3520",
+    floorFill: "#C8A882", floorAlt: "#BFA078",
+    required: 5, startX: 1, startY: 1,
+    narrative: { enter: "Find your dream!", exit: "I have a dream too!" },
+    reward: { type: 'pattern', value: 'stripes', label: 'Pascal Stripes' },
+    map: [
+      [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
+      [WL,F, F, F, F, F, F, WL,F, F, F, F, F, F, F, WL],
+      [WL,F, L, F, WL,F, F, WL,F, F, WL,F, L, F, F, WL],
+      [WL,F, F, F, WL,F, F, F, F, F, WL,F, F, F, H, WL],
+      [WL,F, F, F, F, F, L, F, F, F, F, F, F, WL,F, WL],
+      [WL,WL,WL,F, F, WL,WL,F, WL,WL,F, F, F, WL,F, WL],
+      [WL,F, F, F, F, F, F, F, F, F, F, L, F, F, F, WL],
+      [WL,F, H, F, WL,F, F, F, F, F, WL,F, F, WL,F, WL],
+      [WL,F, F, F, WL,F, L, F, H, F, WL,F, F, WL,F, WL],
+      [WL,F, F, F, F, F, F, F, F, F, F, F, F, F, X, WL],
+      [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
+    ]
+  },
+  {
+    name: "The Caves", emoji: "💎",
+    bg: "#0a0a20", wallFill: "#4a4a6a", wallTop: "#3a3a5a",
+    floorFill: "#6a6a8a", floorAlt: "#606080",
+    required: 5, startX: 1, startY: 9,
+    narrative: { enter: "Follow the light!", exit: "We made it!" },
+    reward: { type: 'dress', value: 'gold', label: 'Gold Dress' },
+    map: [
+      [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
+      [WL,F, F, F, F, F, F, F, F, F, F, F, F, F, X, WL],
+      [WL,F, WL,WL,WL,F, WL,WL,WL,F, WL,WL,WL,F, F, WL],
+      [WL,F, F, L, F, F, F, H, F, F, F, L, F, F, F, WL],
+      [WL,WL,F, WL,F, WL,WL,F, WL,WL,F, WL,F, WL,F, WL],
+      [WL,F, F, F, F, F, L, F, F, F, F, F, F, F, F, WL],
+      [WL,F, WL,F, WL,WL,F, WL,WL,F, WL,F, WL,WL,F, WL],
+      [WL,F, F, F, F, F, F, F, F, F, F, F, H, F, F, WL],
+      [WL,F, WL,WL,F, WL,F, WL,F, WL,F, WL,WL,F, L, WL],
+      [WL,F, F, H, F, F, F, L, F, F, F, F, F, F, F, WL],
+      [WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL],
+    ]
+  },
 ];
 
 const COLS = 16, ROWS = 11, MOVE_SPEED = 2.5;
+const DRESS_COLORS = {
+  purple: { main: '#9B59B6', dark: '#8E44AD', lace: '#D2B4DE' },
+  pink:   { main: '#FF69B4', dark: '#DB3E8F', lace: '#FFB6D9' },
+  blue:   { main: '#5B9BD5', dark: '#3A7CC0', lace: '#A5C8E8' },
+  gold:   { main: '#DAA520', dark: '#B8860B', lace: '#FFE4A0' },
+};
+const FLOWERS = {
+  none: null,
+  daisy: { petals: '#FFFFFF', center: '#FFD700', size: 1 },
+  sunflower: { petals: '#FFD700', center: '#8B4513', size: 1.2 },
+  rose: { petals: '#FF4444', center: '#CC0000', size: 0.9 },
+  crown: { petals: '#FFD700', center: '#FFF8DC', size: 1.3, isCrown: true },
+};
 
-// State
+// ===== GAME STATE =====
 let screen = 'title';
 let currentLevel = 0;
 let celebrationTime = 0;
 let TILE, canvasW, canvasH, scaleFactor;
+let narrativeTimer = 0;
+let narrativeText = '';
+let narrativeAlpha = 0;
+
 const game = {
-  player: { x: 0, y: 0 }, pascal: { x: 0, y: 0 },
+  player: { x: 0, y: 0, squashX: 1, squashY: 1, blinkTimer: 0 },
+  pascal: { x: 0, y: 0, color: '#50C878', targetColor: '#50C878', emotion: 'idle', emotionTimer: 0 },
   trail: [], lanterns: 0, hasPan: false,
   items: [], particles: [], floatingTexts: [],
   exitOpen: false, keys: {}, touchDir: null,
   time: 0, facing: 'right',
+  // Hint system
+  idleTimer: 0, wallBumpCount: 0, hintTier: 0, hintPath: [],
+  // Tap-to-move
+  tapTarget: null, autoPath: [],
+  // Environmental particles
+  envParticles: [],
+  // Footstep timer
+  footstepTimer: 0,
+  // Narrative
+  showNarrative: false,
+  // Hidden collectibles
+  hiddenCount: 0, hiddenTotal: 0,
+  // Free play
+  freePlay: false,
 };
 let swipeStart = { x: 0, y: 0, active: false };
+
+// Off-screen canvas for static tiles (performance)
+let offCanvas = null, offCtx = null;
+let offDirty = true;
 
 const root = document.getElementById('game');
 let canvas, ctx;
@@ -230,35 +527,135 @@ function isMobile() { return window.innerWidth < 768; }
 
 function calcSizes() {
   const mob = isMobile();
-  const controlsH = mob ? 180 : 160;
-  const availW = window.innerWidth - (mob ? 16 : 40);
-  const availH = window.innerHeight - controlsH - (mob ? 20 : 40);
+  const controlsH = mob ? 200 : 170;
+  const availW = window.innerWidth - (mob ? 12 : 40);
+  const availH = window.innerHeight - controlsH - (mob ? 16 : 40);
   const tw = Math.floor(availW / COLS);
   const th = Math.floor(availH / ROWS);
   TILE = Math.max(16, Math.min(tw, th, 56));
   canvasW = COLS * TILE;
   canvasH = ROWS * TILE;
   scaleFactor = TILE / 44;
+  offDirty = true;
 }
 
+// ===== BFS PATHFINDING =====
+function bfs(startCol, startRow, endCol, endRow, lvlData) {
+  const map = lvlData || LEVELS[currentLevel].map;
+  const visited = new Set();
+  const queue = [[startCol, startRow, []]];
+  visited.add(`${startCol},${startRow}`);
+  while (queue.length > 0) {
+    const [cx, cy, path] = queue.shift();
+    if (cx === endCol && cy === endRow) return path;
+    for (const [dx, dy] of [[0,-1],[0,1],[-1,0],[1,0]]) {
+      const nx = cx + dx, ny = cy + dy;
+      const key = `${nx},${ny}`;
+      if (nx < 0 || ny < 0 || ny >= map.length || nx >= map[0].length) continue;
+      if (visited.has(key)) continue;
+      if (map[ny][nx] === WL) continue;
+      visited.add(key);
+      queue.push([nx, ny, [...path, { x: nx, y: ny }]]);
+    }
+  }
+  return [];
+}
+
+// ===== INIT LEVEL =====
 function initLevel(lvl) {
   calcSizes();
   const data = LEVELS[lvl];
   const s = scaleFactor;
-  game.player = { x: data.startX * TILE + TILE / 2, y: data.startY * TILE + TILE / 2 };
-  game.pascal = { x: data.startX * TILE + TILE / 2 - 20 * s, y: data.startY * TILE + TILE / 2 };
+  game.player = { x: data.startX * TILE + TILE / 2, y: data.startY * TILE + TILE / 2, squashX: 1, squashY: 1, blinkTimer: 0 };
+  game.pascal = { x: data.startX * TILE + TILE / 2 - 20 * s, y: data.startY * TILE + TILE / 2, color: '#50C878', targetColor: '#50C878', emotion: 'idle', emotionTimer: 0 };
   game.trail = []; game.lanterns = 0;
   game.items = []; game.particles = []; game.floatingTexts = [];
   game.exitOpen = false; game.time = 0; game.facing = 'right';
+  game.idleTimer = 0; game.wallBumpCount = 0; game.hintTier = 0; game.hintPath = [];
+  game.tapTarget = null; game.autoPath = [];
+  game.envParticles = [];
+  game.footstepTimer = 0;
+  game.hiddenCount = 0; game.hiddenTotal = 0;
+  game.freePlay = false;
+
   for (let r = 0; r < data.map.length; r++) {
     for (let c = 0; c < data.map[r].length; c++) {
-      if (data.map[r][c] === L) game.items.push({ type: 'lantern', x: c * TILE + TILE / 2, y: r * TILE + TILE / 2, collected: false });
-      else if (data.map[r][c] === P) game.items.push({ type: 'pan', x: c * TILE + TILE / 2, y: r * TILE + TILE / 2, collected: false });
+      if (data.map[r][c] === L) game.items.push({ type: 'lantern', x: c * TILE + TILE / 2, y: r * TILE + TILE / 2, collected: false, col: c, row: r });
+      else if (data.map[r][c] === P) game.items.push({ type: 'pan', x: c * TILE + TILE / 2, y: r * TILE + TILE / 2, collected: false, col: c, row: r });
+      else if (data.map[r][c] === H) {
+        game.items.push({ type: 'hidden', x: c * TILE + TILE / 2, y: r * TILE + TILE / 2, collected: false, col: c, row: r });
+        game.hiddenTotal++;
+      }
+    }
+  }
+
+  // Spawn environmental particles
+  spawnEnvParticles(lvl);
+
+  // Show narrative
+  narrativeText = data.narrative.enter;
+  narrativeAlpha = 1;
+  narrativeTimer = 180; // 3 seconds at 60fps
+  game.showNarrative = true;
+
+  offDirty = true;
+}
+
+function spawnEnvParticles(lvl) {
+  game.envParticles = [];
+  const s = scaleFactor;
+  if (lvl === 0) {
+    // Tower: paint splatters (static decorations rendered on offscreen)
+  } else if (lvl === 1) {
+    // Forest: butterflies
+    for (let i = 0; i < 6; i++) {
+      game.envParticles.push({
+        type: 'butterfly',
+        x: 100 + Math.random() * (canvasW - 200),
+        y: 80 + Math.random() * (canvasH - 160),
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.3 + Math.random() * 0.5,
+        color: ['#FFD700', '#FF69B4', '#87CEEB', '#FF6347'][Math.floor(Math.random() * 4)],
+      });
+    }
+  } else if (lvl === 2) {
+    // Village: bunting flags
+    for (let i = 0; i < 8; i++) {
+      game.envParticles.push({
+        type: 'flag',
+        x: 60 + i * (canvasW - 120) / 7,
+        y: 30 * s + Math.sin(i) * 5 * s,
+        phase: Math.random() * Math.PI * 2,
+        color: ['#FF4444', '#FFD700', '#FF69B4', '#9B59B6', '#4CAF50', '#FF6347', '#87CEEB', '#FFA500'][i],
+      });
+    }
+  } else if (lvl === 3) {
+    // Kingdom: floating sparkles
+    for (let i = 0; i < 10; i++) {
+      game.envParticles.push({
+        type: 'sparkle',
+        x: Math.random() * canvasW,
+        y: Math.random() * canvasH,
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.2 + Math.random() * 0.3,
+      });
+    }
+  } else if (lvl === 5) {
+    // Caves: gem sparkles
+    for (let i = 0; i < 8; i++) {
+      game.envParticles.push({
+        type: 'gem',
+        x: 60 + Math.random() * (canvasW - 120),
+        y: 60 + Math.random() * (canvasH - 120),
+        phase: Math.random() * Math.PI * 2,
+        color: ['#FF4444', '#4444FF', '#44FF44', '#FF44FF', '#FFD700', '#00FFFF', '#FF6347', '#9B59B6'][i],
+      });
     }
   }
 }
 
 function isWall(px, py) {
+  if (game.freePlay) return false;
   const data = LEVELS[currentLevel];
   const margin = 12 * scaleFactor;
   const corners = [[px - margin, py - margin], [px + margin, py - margin], [px - margin, py + margin], [px + margin, py + margin]];
@@ -284,7 +681,107 @@ function spawnParticles(x, y, color, count = 8) {
 
 function spawnText(x, y, text) { game.floatingTexts.push({ x, y, text, life: 1 }); }
 
-// ===== RENDERING SCREENS =====
+// ===== RENDER OFFSCREEN TILES =====
+function renderOffscreen() {
+  if (!offDirty) return;
+  const data = LEVELS[currentLevel];
+  const s = scaleFactor;
+  offCanvas = document.createElement('canvas');
+  offCanvas.width = canvasW;
+  offCanvas.height = canvasH;
+  offCtx = offCanvas.getContext('2d');
+
+  offCtx.fillStyle = data.bg;
+  offCtx.fillRect(0, 0, canvasW, canvasH);
+
+  for (let r = 0; r < data.map.length; r++) {
+    for (let c = 0; c < data.map[r].length; c++) {
+      const tx = c * TILE, ty = r * TILE, tile = data.map[r][c];
+      if (tile === WL && !game.freePlay) {
+        offCtx.fillStyle = data.wallFill;
+        offCtx.fillRect(tx, ty, TILE, TILE);
+        offCtx.fillStyle = data.wallTop;
+        offCtx.fillRect(tx, ty, TILE, 8 * s);
+        // Brick pattern
+        offCtx.strokeStyle = data.wallTop; offCtx.lineWidth = 0.5;
+        offCtx.strokeRect(tx + 2, ty + 10 * s, TILE / 2 - 3, TILE / 3 - 2);
+        offCtx.strokeRect(tx + TILE / 2 + 1, ty + 10 * s, TILE / 2 - 3, TILE / 3 - 2);
+      } else {
+        offCtx.fillStyle = (r + c) % 2 === 0 ? data.floorFill : data.floorAlt;
+        offCtx.fillRect(tx, ty, TILE, TILE);
+
+        // Tower paint splatters
+        if (currentLevel === 0 && tile === F) {
+          const seed = r * 16 + c;
+          if (seed % 7 === 0) {
+            offCtx.fillStyle = ['rgba(255,105,180,0.15)', 'rgba(155,89,182,0.15)', 'rgba(135,206,235,0.12)', 'rgba(255,215,0,0.12)'][seed % 4];
+            offCtx.beginPath();
+            offCtx.arc(tx + TILE * 0.3 + (seed % 3) * TILE * 0.2, ty + TILE * 0.4 + (seed % 5) * TILE * 0.1, TILE * 0.15, 0, Math.PI * 2);
+            offCtx.fill();
+          }
+        }
+
+        // Kingdom sun crests
+        if (currentLevel === 3 && tile === F && (r + c) % 11 === 0) {
+          offCtx.save();
+          offCtx.globalAlpha = 0.08;
+          offCtx.fillStyle = '#FFD700';
+          offCtx.beginPath();
+          offCtx.arc(tx + TILE / 2, ty + TILE / 2, TILE * 0.35, 0, Math.PI * 2);
+          offCtx.fill();
+          // Rays
+          for (let ray = 0; ray < 8; ray++) {
+            const angle = (ray / 8) * Math.PI * 2;
+            offCtx.beginPath();
+            offCtx.moveTo(tx + TILE / 2, ty + TILE / 2);
+            offCtx.lineTo(tx + TILE / 2 + Math.cos(angle) * TILE * 0.45, ty + TILE / 2 + Math.sin(angle) * TILE * 0.45);
+            offCtx.strokeStyle = '#FFD700';
+            offCtx.lineWidth = 1;
+            offCtx.stroke();
+          }
+          offCtx.restore();
+        }
+
+        // Cave gems
+        if (currentLevel === 5 && tile === F && (r * 7 + c * 13) % 9 === 0) {
+          offCtx.save();
+          offCtx.globalAlpha = 0.15;
+          const gc = ['#FF4444', '#4444FF', '#44FF44', '#FF44FF', '#FFD700'][(r + c) % 5];
+          offCtx.fillStyle = gc;
+          offCtx.beginPath();
+          const gx = tx + TILE * 0.5, gy = ty + TILE * 0.5, gs = TILE * 0.12;
+          offCtx.moveTo(gx, gy - gs);
+          offCtx.lineTo(gx + gs, gy);
+          offCtx.lineTo(gx, gy + gs * 0.7);
+          offCtx.lineTo(gx - gs, gy);
+          offCtx.closePath();
+          offCtx.fill();
+          offCtx.restore();
+        }
+      }
+    }
+  }
+
+  // Tower window light beams
+  if (currentLevel === 0) {
+    offCtx.save();
+    offCtx.globalCompositeOperation = 'lighter';
+    offCtx.fillStyle = 'rgba(255,255,200,0.03)';
+    // Light from top-right
+    offCtx.beginPath();
+    offCtx.moveTo(canvasW - TILE * 2, TILE);
+    offCtx.lineTo(canvasW - TILE * 4, TILE * 5);
+    offCtx.lineTo(canvasW - TILE, TILE * 5);
+    offCtx.lineTo(canvasW - TILE, TILE);
+    offCtx.closePath();
+    offCtx.fill();
+    offCtx.restore();
+  }
+
+  offDirty = false;
+}
+
+// ===== SCREENS =====
 function renderTitle() {
   const mob = isMobile();
   let html = `<div class="screen" style="background:linear-gradient(135deg,#2c1654 0%,#4a1a6b 30%,#1a0a30 100%)">`;
@@ -292,56 +789,405 @@ function renderTitle() {
     html += `<div class="lantern-bg" style="left:${10 + (i * 7) % 80}%;top:${15 + (i * 13) % 60}%;animation-delay:${i * 0.3}s;animation-duration:${3 + i % 3}s">🏮</div>`;
   }
   html += `
-    <div style="font-size:${mob ? 48 : 60}px;margin-bottom:8px">👸</div>
+    <div style="font-size:${mob ? 52 : 64}px;margin-bottom:8px;animation:float 3s ease-in-out infinite">👸</div>
     <h1 style="font-size:${mob ? 28 : 42}px;margin:0 0 5px;animation:glow 2s ease-in-out infinite;color:#FFD700;text-align:center;padding:0 20px;line-height:1.2">Rapunzel's<br>Great Adventure</h1>
-    <p style="color:#D2B4DE;font-size:${mob ? 14 : 16}px;margin:8px 0 4px">A game by Anna & Dad</p>
-    <div style="display:flex;gap:6px;margin-bottom:20px;font-size:${mob ? 16 : 20}px;animation:fadeUp 1s ease-out 0.5s both">
-      <span>🏰</span><span>→</span><span>🌲</span><span>→</span><span>🏘️</span><span>→</span><span>👑</span>
+    <p style="color:#D2B4DE;font-size:${mob ? 14 : 16}px;margin:8px 0 16px">A game by Anna & Dad</p>
+    <button class="btn btn-purple" onclick="goLevelSelect()" style="font-size:${mob ? 20 : 24}px;animation:fadeUp 1s ease-out 0.5s both">✨ Play ✨</button>
+    <div style="display:flex;gap:12px;margin-top:16px;animation:fadeUp 1s ease-out 0.8s both">
+      <button class="btn btn-small btn-gold" onclick="goGallery()">🏮 Lanterns</button>
+      <button class="btn btn-small btn-purple" onclick="goCloset()">👗 Closet</button>
     </div>
-    <button class="btn btn-purple" onclick="startGame()" style="font-size:${mob ? 18 : 22}px;animation:fadeUp 1s ease-out 0.8s both">✨ Start Adventure ✨</button>
-    <div style="margin-top:16px;color:#B39DDB;font-size:${mob ? 12 : 13}px;text-align:center;animation:fadeUp 1s ease-out 1.2s both;padding:0 20px;font-family:sans-serif">
-      ${mob ? 'Use buttons or swipe to move' : 'Arrow keys or on-screen buttons to move'}<br>
-      Collect all 🏮 lanterns to open the exit!
+    ${save.freePlayUnlocked ? `<button class="btn btn-small btn-green" onclick="goFreePlay()" style="margin-top:10px;animation:fadeUp 1s ease-out 1s both">🌈 Free Play</button>` : ''}
+    <div style="margin-top:20px;animation:fadeUp 1s ease-out 1.2s both">
+      <button onclick="toggleSettings()" style="background:none;border:none;color:rgba(255,255,255,0.3);font-size:12px;font-family:sans-serif;cursor:pointer">⚙️ Parent Settings</button>
     </div>
   </div>`;
   root.innerHTML = html;
 }
 
+function goLevelSelect() {
+  ensureAudio();
+  SFX.uiTap();
+  screen = 'levelSelect';
+  renderLevelSelect();
+}
+
+function renderLevelSelect() {
+  const mob = isMobile();
+  let html = `<div class="screen" style="background:linear-gradient(135deg,#2c1654,#1a0a30)">
+    <button onclick="goTitle()" style="position:absolute;top:12px;left:12px;background:none;border:none;color:white;font-size:28px;cursor:pointer;padding:10px;min-width:48px;min-height:48px">←</button>
+    <h2 style="color:#FFD700;font-size:${mob ? 22 : 28}px;margin-bottom:16px">Choose Level</h2>
+    <div class="level-grid">`;
+
+  LEVELS.forEach((lvl, i) => {
+    const completed = save.levelsCompleted.includes(i);
+    const unlocked = i === 0 || save.levelsCompleted.includes(i - 1);
+    const cls = completed ? 'completed' : (!unlocked ? 'locked' : '');
+    html += `<div class="level-card ${cls}" style="background:${lvl.bg}" onclick="${unlocked ? `startLevel(${i})` : ''}">
+      <div style="font-size:36px">${unlocked ? lvl.emoji : '🔒'}</div>
+      <div style="color:white;font-size:${mob ? 13 : 15}px;margin-top:4px">${lvl.name}</div>
+      ${completed ? '<div style="color:#FFD700;font-size:11px">⭐ Complete</div>' : ''}
+    </div>`;
+  });
+
+  html += `</div></div>`;
+  root.innerHTML = html;
+}
+
+function startLevel(idx) {
+  ensureAudio();
+  SFX.uiTap();
+  currentLevel = idx;
+  save.currentLevel = idx;
+  writeSave();
+  screen = 'playing';
+  calcSizes();
+  initLevel(idx);
+  renderPlaying();
+  startMusic(idx);
+}
+
 function renderLevelComplete() {
+  stopMusic();
   const data = LEVELS[currentLevel];
-  const next = currentLevel < LEVELS.length - 1;
-  let html = `<div class="screen" style="background:linear-gradient(135deg,#1a3a2a,#2d5a3d)">
-    <div style="font-size:60px;animation:bounce 1s ease-in-out infinite">⭐</div>
-    <h2 style="font-size:${isMobile() ? 26 : 32}px;color:#FFD700;margin:10px 0">${data.name} Complete!</h2>
-    <p style="font-size:${isMobile() ? 16 : 18}px;color:#A5D6A7;text-align:center;padding:0 20px">Amazing job! You collected all the lanterns! 🏮</p>`;
-  if (next) {
-    html += `<p style="font-size:16px;color:#C8E6C9;margin:12px 0">Next up: ${LEVELS[currentLevel + 1].emoji} ${LEVELS[currentLevel + 1].name}</p>
-    <button class="btn btn-green" onclick="nextLevel()">Next Level →</button>`;
+  const mob = isMobile();
+
+  // Award reward
+  if (data.reward) {
+    const r = data.reward;
+    if (r.type === 'dress' && !save.unlockedDresses.includes(r.value)) {
+      save.unlockedDresses.push(r.value);
+    } else if (r.type === 'flower' && !save.unlockedFlowers.includes(r.value)) {
+      save.unlockedFlowers.push(r.value);
+    } else if (r.type === 'pattern' && !save.unlockedPatterns.includes(r.value)) {
+      save.unlockedPatterns.push(r.value);
+    }
   }
-  html += `</div>`;
+
+  // Save completion
+  if (!save.levelsCompleted.includes(currentLevel)) {
+    save.levelsCompleted.push(currentLevel);
+  }
+  // Check free play unlock
+  if (save.levelsCompleted.length >= 4) save.freePlayUnlocked = true;
+  writeSave();
+
+  SFX.levelComplete();
+
+  const next = currentLevel < LEVELS.length - 1 && (save.levelsCompleted.includes(currentLevel));
+  const isLastStory = currentLevel === 3;
+
+  if (isLastStory) {
+    screen = 'victory';
+    celebrationTime = 0;
+    startVictoryAnim();
+    renderVictory();
+    return;
+  }
+
+  let html = `<div class="screen" style="background:linear-gradient(135deg,#1a3a2a,#2d5a3d)">
+    <div style="font-size:64px;animation:bounce 1s ease-in-out infinite">⭐</div>
+    <h2 style="font-size:${mob ? 26 : 32}px;color:#FFD700;margin:10px 0">${data.name} Complete!</h2>
+    <p style="font-size:${mob ? 16 : 18}px;color:#A5D6A7;text-align:center;padding:0 20px">${data.narrative.exit}</p>`;
+
+  if (data.reward) {
+    html += `<div style="margin:12px 0;padding:12px 20px;background:rgba(255,215,0,0.15);border-radius:12px;border:1px solid rgba(255,215,0,0.3)">
+      <div style="color:#FFD700;font-size:14px;font-family:sans-serif">🎁 New Unlock!</div>
+      <div style="color:white;font-size:18px;margin-top:4px">${data.reward.label}</div>
+    </div>`;
+  }
+
+  html += `<div style="display:flex;gap:10px;margin-top:16px">`;
+  if (next) {
+    html += `<button class="btn btn-green" onclick="nextLevel()">Next Level →</button>`;
+  }
+  html += `<button class="btn btn-small btn-purple" onclick="goLevelSelect()">🗺️ Levels</button>`;
+  html += `</div></div>`;
   root.innerHTML = html;
 }
 
 function renderVictory() {
+  const mob = isMobile();
   let html = `<div class="screen" style="background:linear-gradient(135deg,#0a0a2e,#1a1a4e,#0a0a2e)">`;
-  for (let i = 0; i < 20; i++) {
-    const emojis = ["🎆","🎇","✨","🏮","⭐","💛","💜"];
-    html += `<div style="position:absolute;left:${5 + (i * 17 + celebrationTime * 3) % 90}%;top:${10 + Math.sin(i + celebrationTime * 0.1) * 30 + 20}%;font-size:${16 + (i % 4) * 6}px;opacity:0.7;transition:all 0.3s">${emojis[i % 7]}</div>`;
+  // Floating lanterns
+  for (let i = 0; i < 25; i++) {
+    const x = 5 + (i * 17 + celebrationTime * 2) % 90;
+    const y = 90 - ((celebrationTime * 0.5 + i * 4) % 100);
+    const sz = 14 + (i % 5) * 5;
+    const op = Math.max(0.1, 0.7 - Math.abs(y - 40) / 100);
+    html += `<div style="position:absolute;left:${x}%;top:${y}%;font-size:${sz}px;opacity:${op};transition:all 0.5s">🏮</div>`;
   }
   html += `
-    <div style="font-size:${isMobile() ? 50 : 70}px;animation:bounce 1.5s ease-in-out infinite;z-index:1">👸🤴</div>
-    <h1 style="font-size:${isMobile() ? 28 : 48}px;margin:12px 0 5px;animation:shimmer 3s linear infinite;text-align:center;z-index:1">You Found Flynn!</h1>
-    <p style="font-size:${isMobile() ? 18 : 22}px;color:#FFD700;z-index:1;text-align:center;padding:0 20px">🏮 The lanterns are rising! 🏮</p>
-    <p style="font-size:${isMobile() ? 14 : 16}px;color:#D2B4DE;margin:8px 0 16px;z-index:1;text-align:center">Rapunzel is home at last!<br>Congratulations Anna! 🎉</p>
-    <button class="btn btn-purple" onclick="startGame()" style="z-index:1">🔄 Play Again!</button>
+    <div style="font-size:${mob ? 54 : 74}px;animation:bounce 1.5s ease-in-out infinite;z-index:1">👸🤴</div>
+    <h1 style="font-size:${mob ? 28 : 48}px;margin:12px 0 5px;animation:shimmer 3s linear infinite;text-align:center;z-index:1">You Found Flynn!</h1>
+    <p style="font-size:${mob ? 18 : 22}px;color:#FFD700;z-index:1;text-align:center;padding:0 20px">🏮 The lanterns are rising! 🏮</p>
+    <p style="font-size:${mob ? 14 : 16}px;color:#D2B4DE;margin:8px 0 16px;z-index:1;text-align:center">You were my new dream.<br>Congratulations Anna! 🎉</p>
+    <div style="display:flex;gap:10px;z-index:1">
+      <button class="btn btn-purple" onclick="goTitle()">🏠 Home</button>
+      <button class="btn btn-gold" onclick="goGallery()">🏮 Gallery</button>
+    </div>
   </div>`;
   root.innerHTML = html;
 }
 
+function goGallery() {
+  ensureAudio();
+  SFX.uiTap();
+  screen = 'gallery';
+  renderGallery();
+}
+
+function renderGallery() {
+  const mob = isMobile();
+  const totalPossible = LEVELS.reduce((s, l) => s + l.required, 0);
+  const collected = save.totalLanterns;
+
+  let html = `<div class="screen" style="background:linear-gradient(180deg,#0a0a2e 0%,#1a1a3a 40%,#2a1a4a 100%)">
+    <button onclick="goTitle()" style="position:absolute;top:12px;left:12px;background:none;border:none;color:white;font-size:28px;cursor:pointer;padding:10px;min-width:48px;min-height:48px">←</button>
+    <h2 style="color:#FFD700;font-size:${mob ? 20 : 26}px;margin-bottom:6px">🏮 Lantern Sky</h2>
+    <p style="color:#D2B4DE;font-size:13px;font-family:sans-serif">${collected} lanterns collected</p>
+    <canvas id="galleryCanvas" class="gallery-canvas" width="${Math.min(380, window.innerWidth - 40)}" height="${Math.min(300, window.innerHeight - 200)}" style="margin:12px 0"></canvas>
+    <button class="btn btn-small btn-purple" onclick="goTitle()">🏠 Home</button>
+  </div>`;
+  root.innerHTML = html;
+
+  // Draw gallery
+  const gc = document.getElementById('galleryCanvas');
+  const gctx = gc.getContext('2d');
+  const gw = gc.width, gh = gc.height;
+
+  // Night sky gradient
+  const grad = gctx.createLinearGradient(0, 0, 0, gh);
+  grad.addColorStop(0, '#0a0a2e');
+  grad.addColorStop(0.6, '#1a1a4a');
+  grad.addColorStop(1, '#2a2a5a');
+  gctx.fillStyle = grad;
+  gctx.fillRect(0, 0, gw, gh);
+
+  // Stars
+  for (let i = 0; i < 40; i++) {
+    gctx.fillStyle = `rgba(255,255,255,${0.3 + Math.random() * 0.5})`;
+    gctx.fillRect(Math.random() * gw, Math.random() * gh * 0.7, 1.5, 1.5);
+  }
+
+  // Water at bottom
+  gctx.fillStyle = 'rgba(30,30,80,0.5)';
+  gctx.fillRect(0, gh * 0.85, gw, gh * 0.15);
+
+  // Boat silhouette
+  gctx.fillStyle = '#2a2a3a';
+  gctx.beginPath();
+  gctx.moveTo(gw * 0.35, gh * 0.88);
+  gctx.quadraticCurveTo(gw * 0.5, gh * 0.82, gw * 0.65, gh * 0.88);
+  gctx.quadraticCurveTo(gw * 0.5, gh * 0.92, gw * 0.35, gh * 0.88);
+  gctx.fill();
+
+  // Draw collected lanterns floating
+  const now = Date.now() / 1000;
+  for (let i = 0; i < Math.min(collected, 40); i++) {
+    const lx = (gw * 0.1) + (i % 8) * (gw * 0.1) + Math.sin(now + i) * 8;
+    const ly = (gh * 0.1) + Math.floor(i / 8) * (gh * 0.15) + Math.cos(now * 0.7 + i * 0.5) * 5;
+    const sz = 6 + (i % 3) * 2;
+
+    // Glow
+    const glow = gctx.createRadialGradient(lx, ly, 1, lx, ly, sz * 3);
+    glow.addColorStop(0, 'rgba(255,215,0,0.3)');
+    glow.addColorStop(1, 'rgba(255,215,0,0)');
+    gctx.fillStyle = glow;
+    gctx.fillRect(lx - sz * 3, ly - sz * 3, sz * 6, sz * 6);
+
+    // Lantern body
+    gctx.fillStyle = '#FFD700';
+    gctx.beginPath(); gctx.arc(lx, ly, sz, 0, Math.PI * 2); gctx.fill();
+    gctx.fillStyle = '#FFF8DC';
+    gctx.beginPath(); gctx.arc(lx, ly - 1, sz * 0.5, 0, Math.PI * 2); gctx.fill();
+  }
+
+  // Tap interaction on gallery
+  gc.addEventListener('click', (e) => {
+    const rect = gc.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    // Tap near a lantern to make it bob
+    SFX.lanternCollect();
+    spawnGalleryRipple(gctx, mx, my, gw, gh);
+  });
+}
+
+function spawnGalleryRipple(gctx, x, y, w, h) {
+  // Simple ripple effect
+  gctx.strokeStyle = 'rgba(255,215,0,0.4)';
+  gctx.lineWidth = 2;
+  for (let r = 0; r < 3; r++) {
+    setTimeout(() => {
+      gctx.beginPath();
+      gctx.arc(x, y, 10 + r * 15, 0, Math.PI * 2);
+      gctx.stroke();
+    }, r * 100);
+  }
+}
+
+function goCloset() {
+  ensureAudio();
+  SFX.uiTap();
+  screen = 'closet';
+  renderCloset();
+}
+
+function renderCloset() {
+  const mob = isMobile();
+  const allDresses = [
+    { id: 'purple', emoji: '👗', label: 'Purple' },
+    { id: 'pink', emoji: '👗', label: 'Pink' },
+    { id: 'blue', emoji: '👗', label: 'Blue' },
+    { id: 'gold', emoji: '👗', label: 'Gold' },
+  ];
+  const allFlowers = [
+    { id: 'none', emoji: '✖️', label: 'None' },
+    { id: 'daisy', emoji: '🌼', label: 'Daisy' },
+    { id: 'sunflower', emoji: '🌻', label: 'Sunflower' },
+    { id: 'rose', emoji: '🌹', label: 'Rose' },
+    { id: 'crown', emoji: '👑', label: 'Crown' },
+  ];
+  const allPatterns = [
+    { id: 'solid', emoji: '🟢', label: 'Solid' },
+    { id: 'stripes', emoji: '🦎', label: 'Stripes' },
+    { id: 'dots', emoji: '🔵', label: 'Dots' },
+  ];
+
+  let html = `<div class="screen" style="background:linear-gradient(135deg,#2c1654,#4a1a6b);overflow-y:auto">
+    <button onclick="goTitle()" style="position:absolute;top:12px;left:12px;background:none;border:none;color:white;font-size:28px;cursor:pointer;padding:10px;min-width:48px;min-height:48px">←</button>
+    <h2 style="color:#FFD700;font-size:${mob ? 20 : 26}px;margin:40px 0 6px">👗 Rapunzel's Closet</h2>
+
+    <p style="color:#D2B4DE;font-size:13px;margin:8px 0 4px;font-family:sans-serif">Dress Color</p>
+    <div class="closet-grid">`;
+
+  allDresses.forEach(d => {
+    const unlocked = save.unlockedDresses.includes(d.id);
+    const selected = save.dressColor === d.id;
+    html += `<div class="closet-item ${selected ? 'selected' : ''} ${!unlocked ? 'locked' : ''}" onclick="${unlocked ? `pickDress('${d.id}')` : ''}" style="${unlocked ? `color:${DRESS_COLORS[d.id].main}` : ''}">
+      ${unlocked ? d.emoji : '🔒'}
+    </div>`;
+  });
+
+  html += `</div><p style="color:#D2B4DE;font-size:13px;margin:12px 0 4px;font-family:sans-serif">Hair Accessory</p>
+    <div class="closet-grid">`;
+
+  allFlowers.forEach(f => {
+    const unlocked = save.unlockedFlowers.includes(f.id);
+    const selected = save.hairFlower === f.id;
+    html += `<div class="closet-item ${selected ? 'selected' : ''} ${!unlocked ? 'locked' : ''}" onclick="${unlocked ? `pickFlower('${f.id}')` : ''}">
+      ${unlocked ? f.emoji : '🔒'}
+    </div>`;
+  });
+
+  html += `</div><p style="color:#D2B4DE;font-size:13px;margin:12px 0 4px;font-family:sans-serif">Pascal Style</p>
+    <div class="closet-grid">`;
+
+  allPatterns.forEach(p => {
+    const unlocked = save.unlockedPatterns.includes(p.id);
+    const selected = save.pascalPattern === p.id;
+    html += `<div class="closet-item ${selected ? 'selected' : ''} ${!unlocked ? 'locked' : ''}" onclick="${unlocked ? `pickPattern('${p.id}')` : ''}">
+      ${unlocked ? p.emoji : '🔒'}
+    </div>`;
+  });
+
+  html += `</div>
+    <button class="btn btn-small btn-purple" onclick="goTitle()" style="margin:16px 0 30px">🏠 Home</button>
+  </div>`;
+  root.innerHTML = html;
+}
+
+function pickDress(id) { SFX.uiTap(); save.dressColor = id; writeSave(); renderCloset(); }
+function pickFlower(id) { SFX.uiTap(); save.hairFlower = id; writeSave(); renderCloset(); }
+function pickPattern(id) { SFX.uiTap(); save.pascalPattern = id; writeSave(); renderCloset(); }
+
+// ===== PARENT SETTINGS =====
+let settingsHoldTimer = null;
+function toggleSettings() {
+  // Simple gate: tap 5 times quickly
+  if (!window._settingsTaps) window._settingsTaps = 0;
+  window._settingsTaps++;
+  if (window._settingsTaps >= 5) {
+    window._settingsTaps = 0;
+    showSettings();
+  }
+  clearTimeout(settingsHoldTimer);
+  settingsHoldTimer = setTimeout(() => { window._settingsTaps = 0; }, 2000);
+}
+
+function showSettings() {
+  const mob = isMobile();
+  let html = `<div class="screen" style="background:linear-gradient(135deg,#1a1a1a,#2a2a2a)">
+    <h2 style="color:white;font-size:20px;margin-bottom:20px;font-family:sans-serif">Parent Settings</h2>
+    <div style="display:flex;flex-direction:column;gap:12px;padding:0 30px;width:100%;max-width:350px">
+      <label style="color:white;font-family:sans-serif;font-size:14px;display:flex;justify-content:space-between;align-items:center">
+        Music <input type="checkbox" ${save.musicOn ? 'checked' : ''} onchange="save.musicOn=this.checked;writeSave()">
+      </label>
+      <label style="color:white;font-family:sans-serif;font-size:14px;display:flex;justify-content:space-between;align-items:center">
+        Sound Effects <input type="checkbox" ${save.sfxOn ? 'checked' : ''} onchange="save.sfxOn=this.checked;writeSave()">
+      </label>
+      <button class="btn btn-small" style="background:#c0392b;border-color:#e74c3c;margin-top:16px" onclick="if(confirm('Reset all progress?')){localStorage.removeItem('rapunzelSave');save=loadSave();goTitle()}">Reset All Progress</button>
+    </div>
+    <button class="btn btn-small btn-purple" onclick="goTitle()" style="margin-top:24px">← Back</button>
+  </div>`;
+  screen = 'settings';
+  root.innerHTML = html;
+}
+
+function goTitle() {
+  stopMusic();
+  screen = 'title';
+  renderTitle();
+}
+
+// ===== FREE PLAY =====
+function goFreePlay() {
+  ensureAudio();
+  SFX.uiTap();
+  screen = 'freePlaySelect';
+  renderFreePlaySelect();
+}
+
+function renderFreePlaySelect() {
+  const mob = isMobile();
+  let html = `<div class="screen" style="background:linear-gradient(135deg,#1a4a2a,#2d6a3d)">
+    <button onclick="goTitle()" style="position:absolute;top:12px;left:12px;background:none;border:none;color:white;font-size:28px;cursor:pointer;padding:10px;min-width:48px;min-height:48px">←</button>
+    <h2 style="color:#FFD700;font-size:${mob ? 20 : 26}px;margin-bottom:12px">🌈 Free Play</h2>
+    <p style="color:#A5D6A7;font-size:13px;font-family:sans-serif;margin-bottom:16px">No walls! Just explore!</p>
+    <div class="level-grid">`;
+
+  LEVELS.forEach((lvl, i) => {
+    if (i < 4) { // Only original 4 levels for free play
+      html += `<div class="level-card" style="background:${lvl.bg}" onclick="startFreePlay(${i})">
+        <div style="font-size:36px">${lvl.emoji}</div>
+        <div style="color:white;font-size:${mob ? 13 : 15}px;margin-top:4px">${lvl.name}</div>
+      </div>`;
+    }
+  });
+
+  html += `</div></div>`;
+  root.innerHTML = html;
+}
+
+function startFreePlay(idx) {
+  ensureAudio();
+  SFX.uiTap();
+  currentLevel = idx;
+  screen = 'playing';
+  calcSizes();
+  initLevel(idx);
+  game.freePlay = true;
+  game.exitOpen = false;
+  offDirty = true;
+  renderPlaying();
+  startMusic(idx);
+}
+
+// ===== PLAYING SCREEN =====
 function renderPlaying() {
   const data = LEVELS[currentLevel];
   const mob = isMobile();
-  let html = `<div class="screen" style="background:${data.bg};justify-content:center;padding:${mob ? '8px' : '16px'}">
+  let html = `<div class="screen" style="background:${data.bg};justify-content:center;padding:${mob ? '6px' : '16px'}">
     <canvas id="c" width="${canvasW}" height="${canvasH}" style="width:${canvasW}px;max-width:100%;height:auto;touch-action:none"></canvas>
     <div class="dpad">
       <button class="dpad-btn" style="grid-area:up" data-dir="up">▲</button>
@@ -350,7 +1196,7 @@ function renderPlaying() {
       <button class="dpad-btn" style="grid-area:right" data-dir="right">▶</button>
       <button class="dpad-btn" style="grid-area:down" data-dir="down">▼</button>
     </div>
-    <div class="hint">${mob ? 'Swipe on map or use buttons' : 'Arrow keys / WASD to move'}</div>
+    <div class="hint">${mob ? 'Tap map to move • Swipe or buttons' : 'Tap map, arrow keys, or buttons'}</div>
   </div>`;
   root.innerHTML = html;
 
@@ -360,15 +1206,36 @@ function renderPlaying() {
   // D-pad events
   document.querySelectorAll('.dpad-btn').forEach(btn => {
     const dir = btn.dataset.dir === 'down' ? 'downDir' : btn.dataset.dir;
-    btn.addEventListener('pointerdown', e => { e.preventDefault(); game.touchDir = dir; });
+    btn.addEventListener('pointerdown', e => { e.preventDefault(); ensureAudio(); game.touchDir = dir; game.autoPath = []; });
     btn.addEventListener('pointerup', () => game.touchDir = null);
     btn.addEventListener('pointerleave', () => game.touchDir = null);
     btn.addEventListener('pointercancel', () => game.touchDir = null);
   });
 
+  // Canvas tap-to-move
+  canvas.addEventListener('click', e => {
+    ensureAudio();
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvasW / rect.width;
+    const mx = (e.clientX - rect.left) * scaleX;
+    const my = (e.clientY - rect.top) * scaleX;
+    const targetCol = Math.floor(mx / TILE);
+    const targetRow = Math.floor(my / TILE);
+    const data = LEVELS[currentLevel];
+    if (targetRow >= 0 && targetRow < data.map.length && targetCol >= 0 && targetCol < data.map[0].length) {
+      if (data.map[targetRow][targetCol] !== WL || game.freePlay) {
+        const playerCol = Math.floor(game.player.x / TILE);
+        const playerRow = Math.floor(game.player.y / TILE);
+        game.autoPath = bfs(playerCol, playerRow, targetCol, targetRow);
+        game.tapTarget = { x: targetCol * TILE + TILE / 2, y: targetRow * TILE + TILE / 2 };
+      }
+    }
+  });
+
   // Canvas swipe
   canvas.addEventListener('touchstart', e => {
     e.preventDefault();
+    ensureAudio();
     const t = e.touches[0];
     swipeStart = { x: t.clientX, y: t.clientY, active: true };
   }, { passive: false });
@@ -377,14 +1244,28 @@ function renderPlaying() {
     if (!swipeStart.active) return;
     const t = e.touches[0];
     const dx = t.clientX - swipeStart.x, dy = t.clientY - swipeStart.y;
-    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+    if (Math.abs(dx) > 15 || Math.abs(dy) > 15) {
       game.touchDir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'downDir' : 'up');
+      game.autoPath = [];
     }
   }, { passive: false });
   canvas.addEventListener('touchend', e => { e.preventDefault(); swipeStart.active = false; game.touchDir = null; }, { passive: false });
   canvas.addEventListener('touchcancel', () => { swipeStart.active = false; game.touchDir = null; });
 
   requestAnimationFrame(gameLoop);
+}
+
+function nextLevel() {
+  ensureAudio();
+  SFX.uiTap();
+  currentLevel++;
+  save.currentLevel = currentLevel;
+  writeSave();
+  screen = 'playing';
+  calcSizes();
+  initLevel(currentLevel);
+  renderPlaying();
+  startMusic(currentLevel);
 }
 
 // ===== GAME LOOP =====
@@ -396,37 +1277,159 @@ function gameLoop() {
   const moveSpeed = MOVE_SPEED * s;
   g.time++;
 
-  // Input
+  // Narrative fade
+  if (narrativeTimer > 0) {
+    narrativeTimer--;
+    if (narrativeTimer < 30) narrativeAlpha = narrativeTimer / 30;
+  }
+
+  // ===== INPUT =====
   let dx = 0, dy = 0;
-  if (g.keys['ArrowLeft'] || g.keys['a']) dx -= 1;
-  if (g.keys['ArrowRight'] || g.keys['d']) dx += 1;
-  if (g.keys['ArrowUp'] || g.keys['w']) dy -= 1;
-  if (g.keys['ArrowDown'] || g.keys['s']) dy += 1;
-  if (g.touchDir === 'left') dx = -1;
-  if (g.touchDir === 'right') dx = 1;
-  if (g.touchDir === 'up') dy = -1;
-  if (g.touchDir === 'downDir') dy = 1;
+  let hasInput = false;
+
+  // Keyboard
+  if (g.keys['ArrowLeft'] || g.keys['a']) { dx -= 1; hasInput = true; }
+  if (g.keys['ArrowRight'] || g.keys['d']) { dx += 1; hasInput = true; }
+  if (g.keys['ArrowUp'] || g.keys['w']) { dy -= 1; hasInput = true; }
+  if (g.keys['ArrowDown'] || g.keys['s']) { dy += 1; hasInput = true; }
+
+  // Touch D-pad
+  if (g.touchDir === 'left') { dx = -1; hasInput = true; }
+  if (g.touchDir === 'right') { dx = 1; hasInput = true; }
+  if (g.touchDir === 'up') { dy = -1; hasInput = true; }
+  if (g.touchDir === 'downDir') { dy = 1; hasInput = true; }
+
+  // Auto-path (tap-to-move)
+  if (g.autoPath.length > 0 && !hasInput) {
+    const next = g.autoPath[0];
+    const targetX = next.x * TILE + TILE / 2;
+    const targetY = next.y * TILE + TILE / 2;
+    const adx = targetX - g.player.x;
+    const ady = targetY - g.player.y;
+    const dist = Math.hypot(adx, ady);
+    if (dist < moveSpeed * 1.5) {
+      g.autoPath.shift();
+    } else {
+      dx = adx / dist;
+      dy = ady / dist;
+      hasInput = true;
+    }
+  }
+
+  if (hasInput) {
+    g.idleTimer = 0;
+    g.hintTier = 0;
+    g.wallBumpCount = 0;
+  } else {
+    g.idleTimer++;
+  }
 
   if (dx !== 0 || dy !== 0) {
     if (Math.abs(dx) > Math.abs(dy)) g.facing = dx > 0 ? 'right' : 'left';
   }
-  if (dx !== 0 && dy !== 0) { dx *= 0.707; dy *= 0.707; }
+  if (Math.abs(dx) > 0 && Math.abs(dy) > 0) {
+    const len = Math.hypot(dx, dy);
+    dx /= len; dy /= len;
+  }
 
-  const nx = g.player.x + dx * moveSpeed, ny = g.player.y + dy * moveSpeed;
-  if (!isWall(nx, g.player.y)) g.player.x = nx;
-  if (!isWall(g.player.x, ny)) g.player.y = ny;
+  // Movement with wall detection
+  const nx = g.player.x + dx * moveSpeed;
+  const ny = g.player.y + dy * moveSpeed;
+  let hitWall = false;
+  if (!isWall(nx, g.player.y)) {
+    g.player.x = nx;
+  } else if (dx !== 0) {
+    hitWall = true;
+  }
+  if (!isWall(g.player.x, ny)) {
+    g.player.y = ny;
+  } else if (dy !== 0) {
+    hitWall = true;
+  }
+
+  // Wall bump feedback
+  if (hitWall && hasInput) {
+    g.wallBumpCount++;
+    if (g.time % 10 === 0) SFX.wallBump();
+    // Squash and stretch
+    g.player.squashX = 0.85;
+    g.player.squashY = 1.15;
+  }
+  // Recover squash
+  g.player.squashX += (1 - g.player.squashX) * 0.15;
+  g.player.squashY += (1 - g.player.squashY) * 0.15;
+
+  // Blink timer
+  g.player.blinkTimer++;
+  if (g.player.blinkTimer > 200) {
+    if (g.player.blinkTimer > 210) g.player.blinkTimer = 0;
+  }
+
+  // Footstep sounds
+  if ((dx !== 0 || dy !== 0) && !hitWall) {
+    g.footstepTimer++;
+    if (g.footstepTimer % 12 === 0) SFX.footstep();
+  }
 
   // Trail
-  if (g.time % 2 === 0) { g.trail.push({ x: g.player.x, y: g.player.y }); if (g.trail.length > 30) g.trail.shift(); }
+  if (g.time % 2 === 0) { g.trail.push({ x: g.player.x, y: g.player.y }); if (g.trail.length > 35) g.trail.shift(); }
 
-  // Pascal
+  // Pascal movement + behavior
   if (g.trail.length > 15) {
     const t = g.trail[g.trail.length - 15];
     g.pascal.x += (t.x - g.pascal.x) * 0.08;
     g.pascal.y += (t.y - g.pascal.y) * 0.08;
   }
 
-  // Collect
+  // Pascal color matching (camouflage)
+  const pCol = Math.floor(g.pascal.x / TILE);
+  const pRow = Math.floor(g.pascal.y / TILE);
+  if (g.pascal.emotion === 'idle') {
+    const envColors = { 0: data.floorFill, 1: data.wallFill };
+    if (pRow >= 0 && pRow < data.map.length && pCol >= 0 && pCol < data.map[0].length) {
+      g.pascal.targetColor = data.floorFill;
+    }
+    // Slowly blend toward target
+    g.pascal.color = g.pascal.targetColor;
+  }
+  if (g.pascal.emotionTimer > 0) g.pascal.emotionTimer--;
+  if (g.pascal.emotionTimer === 0 && g.pascal.emotion !== 'idle') {
+    g.pascal.emotion = 'idle';
+  }
+
+  // ===== HINT SYSTEM =====
+  if (!g.freePlay) {
+    if (g.idleTimer > 420 || g.wallBumpCount >= 4) { // ~7 seconds
+      if (g.hintTier < 1) { g.hintTier = 1; SFX.hint(); }
+    }
+    if (g.idleTimer > 900 || g.wallBumpCount >= 6) { // ~15 seconds
+      if (g.hintTier < 2) {
+        g.hintTier = 2;
+        SFX.pascalChirp();
+        // Pascal hops toward nearest uncollected lantern
+        const nearest = findNearestItem();
+        if (nearest) {
+          g.pascal.emotion = 'hint';
+          g.pascal.emotionTimer = 60;
+          g.pascal.targetColor = '#FF69B4';
+        }
+      }
+    }
+    if (g.idleTimer > 1500 || g.wallBumpCount >= 8) { // ~25 seconds
+      if (g.hintTier < 3) {
+        g.hintTier = 3;
+        // Show golden path
+        const nearest = findNearestItem();
+        if (nearest) {
+          const playerCol = Math.floor(g.player.x / TILE);
+          const playerRow = Math.floor(g.player.y / TILE);
+          g.hintPath = bfs(playerCol, playerRow, nearest.col, nearest.row);
+        }
+      }
+    }
+  }
+
+  // ===== COLLECT =====
   const cd = 22 * s;
   for (const item of g.items) {
     if (item.collected) continue;
@@ -434,26 +1437,62 @@ function gameLoop() {
       item.collected = true;
       if (item.type === 'lantern') {
         g.lanterns++;
-        spawnParticles(item.x, item.y, '#FFD700', 12);
+        save.totalLanterns++;
+        save.galleryLanterns.push({ level: currentLevel, time: Date.now() });
+        writeSave();
+        spawnParticles(item.x, item.y, '#FFD700', 14);
         spawnText(item.x, item.y - 10 * s, '✨');
-        if (g.lanterns >= data.required) { g.exitOpen = true; spawnText(g.player.x, g.player.y - 30 * s, 'Exit open! 🚪'); }
+        SFX.lanternCollect();
+        g.pascal.emotion = 'celebrate';
+        g.pascal.emotionTimer = 40;
+        g.pascal.color = '#FF69B4';
+        if (g.lanterns >= data.required && !g.freePlay) {
+          g.exitOpen = true;
+          SFX.exitOpen();
+          spawnText(g.player.x, g.player.y - 30 * s, '🚪✨');
+        }
       } else if (item.type === 'pan') {
         g.hasPan = true;
         spawnParticles(item.x, item.y, '#B8860B', 10);
-        spawnText(item.x, item.y - 10 * s, '🍳 Got it!');
+        spawnText(item.x, item.y - 10 * s, '🍳');
+        SFX.panPickup();
+      } else if (item.type === 'hidden') {
+        g.hiddenCount++;
+        const hiddenKey = `${currentLevel}-${item.col}-${item.row}`;
+        if (!save.hiddenFound.includes(hiddenKey)) {
+          save.hiddenFound.push(hiddenKey);
+          // Unlock bonus items
+          if (save.hiddenFound.length >= 3 && !save.unlockedFlowers.includes('sunflower')) {
+            save.unlockedFlowers.push('sunflower');
+            spawnText(item.x, item.y - 20 * s, '🌻 New!');
+          }
+          if (save.hiddenFound.length >= 6 && !save.unlockedFlowers.includes('rose')) {
+            save.unlockedFlowers.push('rose');
+            spawnText(item.x, item.y - 20 * s, '🌹 New!');
+          }
+          if (save.hiddenFound.length >= 10 && !save.unlockedPatterns.includes('dots')) {
+            save.unlockedPatterns.push('dots');
+            spawnText(item.x, item.y - 20 * s, '🔵 New!');
+          }
+          writeSave();
+        }
+        spawnParticles(item.x, item.y, '#FF69B4', 10);
+        spawnText(item.x, item.y - 10 * s, '🎨');
+        SFX.collectHidden();
       }
     }
   }
 
-  // Exit
-  if (g.exitOpen) {
+  // ===== EXIT CHECK =====
+  if (g.exitOpen && !g.freePlay) {
     for (let r = 0; r < data.map.length; r++) {
       for (let c = 0; c < data.map[r].length; c++) {
         if (data.map[r][c] === X) {
           const ex = c * TILE + TILE / 2, ey = r * TILE + TILE / 2;
           if (Math.hypot(ex - g.player.x, ey - g.player.y) < cd) {
-            if (currentLevel < LEVELS.length - 1) { screen = 'levelComplete'; renderLevelComplete(); return; }
-            else { screen = 'victory'; celebrationTime = 0; startVictoryAnim(); renderVictory(); return; }
+            screen = 'levelComplete';
+            renderLevelComplete();
+            return;
           }
         }
       }
@@ -465,118 +1504,346 @@ function gameLoop() {
   g.floatingTexts = g.floatingTexts.filter(ft => { ft.y -= 0.5 * s; ft.life -= 0.015; return ft.life > 0; });
 
   // ===== DRAW =====
-  canvas.width = canvasW; canvas.height = canvasH;
-  ctx.fillStyle = data.bg; ctx.fillRect(0, 0, canvasW, canvasH);
+  renderOffscreen();
+  canvas.width = canvasW;
+  canvas.height = canvasH;
 
-  // Tiles
-  for (let r = 0; r < data.map.length; r++) {
-    for (let c = 0; c < data.map[r].length; c++) {
-      const tx = c * TILE, ty = r * TILE, tile = data.map[r][c];
-      if (tile === WL) {
-        ctx.fillStyle = data.wallFill; ctx.fillRect(tx, ty, TILE, TILE);
-        ctx.fillStyle = data.wallTop; ctx.fillRect(tx, ty, TILE, 8 * s);
-        ctx.strokeStyle = data.wallTop; ctx.lineWidth = 0.5;
-        ctx.strokeRect(tx + 2, ty + 10 * s, TILE / 2 - 3, TILE / 3 - 2);
-        ctx.strokeRect(tx + TILE / 2 + 1, ty + 10 * s, TILE / 2 - 3, TILE / 3 - 2);
-      } else {
-        ctx.fillStyle = (r + c) % 2 === 0 ? data.floorFill : data.floorAlt;
-        ctx.fillRect(tx, ty, TILE, TILE);
-      }
-      if (tile === X) {
-        if (g.exitOpen) {
-          const pulse = Math.sin(g.time * 0.08) * 0.3 + 0.7;
-          ctx.fillStyle = `rgba(100,255,100,${pulse * 0.4})`; ctx.fillRect(tx, ty, TILE, TILE);
-          ctx.fillStyle = '#4CAF50'; ctx.font = `bold ${Math.round(11 * s)}px sans-serif`; ctx.textAlign = 'center';
-          ctx.fillText('EXIT', tx + TILE / 2, ty + TILE / 2 - 4 * s);
-          ctx.fillText('→', tx + TILE / 2, ty + TILE / 2 + 10 * s);
-        } else {
-          ctx.fillStyle = 'rgba(150,80,80,0.3)'; ctx.fillRect(tx, ty, TILE, TILE);
-          ctx.fillStyle = '#999'; ctx.font = `${Math.round(9 * s)}px sans-serif`; ctx.textAlign = 'center';
-          ctx.fillText('🔒', tx + TILE / 2, ty + TILE / 2 + 4 * s);
+  // Draw cached background
+  ctx.drawImage(offCanvas, 0, 0);
+
+  // Exit tile (animated, so drawn live)
+  if (!g.freePlay) {
+    for (let r = 0; r < data.map.length; r++) {
+      for (let c = 0; c < data.map[r].length; c++) {
+        if (data.map[r][c] === X) {
+          const tx = c * TILE, ty = r * TILE;
+          if (g.exitOpen) {
+            const pulse = Math.sin(g.time * 0.08) * 0.3 + 0.7;
+            ctx.fillStyle = `rgba(100,255,100,${pulse * 0.4})`;
+            ctx.fillRect(tx, ty, TILE, TILE);
+            // Door icon instead of text
+            ctx.fillStyle = `rgba(100,255,100,${pulse})`;
+            ctx.fillRect(tx + TILE * 0.3, ty + TILE * 0.15, TILE * 0.4, TILE * 0.7);
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(tx + TILE * 0.6, ty + TILE * 0.5, 2 * s, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            ctx.fillStyle = 'rgba(150,80,80,0.3)';
+            ctx.fillRect(tx, ty, TILE, TILE);
+            ctx.fillStyle = '#777';
+            ctx.fillRect(tx + TILE * 0.3, ty + TILE * 0.15, TILE * 0.4, TILE * 0.7);
+            ctx.fillStyle = '#555';
+            ctx.fillRect(tx + TILE * 0.35, ty + TILE * 0.2, TILE * 0.3, TILE * 0.25);
+            ctx.fillRect(tx + TILE * 0.35, ty + TILE * 0.5, TILE * 0.3, TILE * 0.25);
+          }
         }
       }
     }
   }
 
-  // Items
-  for (const item of g.items) {
-    if (item.collected) continue;
-    if (item.type === 'lantern') {
-      const glow = ctx.createRadialGradient(item.x, item.y, 2, item.x, item.y, 20 * s);
-      glow.addColorStop(0, 'rgba(255,215,0,0.4)'); glow.addColorStop(1, 'rgba(255,215,0,0)');
-      ctx.fillStyle = glow; const gr = 20 * s; ctx.fillRect(item.x - gr, item.y - gr, gr * 2, gr * 2);
-      const bob = Math.sin(g.time * 0.05 + item.x) * 2 * s;
-      ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(item.x, item.y + bob, 8 * s, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#FFF8DC'; ctx.beginPath(); ctx.arc(item.x, item.y + bob - s, 4 * s, 0, Math.PI * 2); ctx.fill();
-    } else if (item.type === 'pan') {
-      ctx.fillStyle = '#4a4a4a'; ctx.beginPath(); ctx.arc(item.x, item.y, 10 * s, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#6a6a6a'; ctx.beginPath(); ctx.arc(item.x, item.y, 7 * s, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = '#4a4a4a'; ctx.lineWidth = 3 * s;
-      ctx.beginPath(); ctx.moveTo(item.x + 8 * s, item.y); ctx.lineTo(item.x + 18 * s, item.y - 3 * s); ctx.stroke();
-      const sp = Math.sin(g.time * 0.1) * 0.5 + 0.5;
-      ctx.fillStyle = `rgba(255,255,200,${sp})`; ctx.font = `${Math.round(12 * s)}px sans-serif`; ctx.textAlign = 'center';
-      ctx.fillText('✦', item.x, item.y - 14 * s);
+  // ===== ENVIRONMENTAL PARTICLES =====
+  for (const ep of g.envParticles) {
+    if (ep.type === 'butterfly') {
+      const bx = ep.x + Math.sin(g.time * 0.02 + ep.phase) * 40;
+      const by = ep.y + Math.cos(g.time * 0.015 + ep.phase) * 20;
+      // Scatter if player is near
+      const pDist = Math.hypot(bx - g.player.x, by - g.player.y);
+      const scatter = pDist < 60 * s ? Math.sin(g.time * 0.3) * 20 : 0;
+      const wing = Math.sin(g.time * 0.15 + ep.phase) * 4 * s;
+      ctx.fillStyle = ep.color;
+      ctx.globalAlpha = 0.6;
+      ctx.beginPath(); ctx.ellipse(bx + scatter, by, Math.abs(wing), 3 * s, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(bx + scatter, by, Math.abs(wing), 3 * s, Math.PI, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+    } else if (ep.type === 'flag') {
+      const wave = Math.sin(g.time * 0.04 + ep.phase) * 3 * s;
+      ctx.fillStyle = ep.color;
+      ctx.globalAlpha = 0.4;
+      ctx.beginPath();
+      ctx.moveTo(ep.x, ep.y);
+      ctx.lineTo(ep.x + 10 * s + wave, ep.y + 6 * s);
+      ctx.lineTo(ep.x, ep.y + 12 * s);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    } else if (ep.type === 'sparkle') {
+      const sx = ep.x + Math.sin(g.time * 0.01 + ep.phase) * 30;
+      const sy = ep.y + Math.cos(g.time * 0.008 + ep.phase) * 20;
+      const sp = Math.sin(g.time * 0.05 + ep.phase) * 0.5 + 0.5;
+      ctx.fillStyle = `rgba(255,215,0,${sp * 0.3})`;
+      ctx.beginPath(); ctx.arc(sx, sy, 2 * s * sp, 0, Math.PI * 2); ctx.fill();
+    } else if (ep.type === 'gem') {
+      const gp = Math.sin(g.time * 0.03 + ep.phase) * 0.5 + 0.5;
+      ctx.fillStyle = ep.color;
+      ctx.globalAlpha = gp * 0.25;
+      ctx.beginPath(); ctx.arc(ep.x, ep.y, 3 * s, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
     }
   }
 
-  // Hair
-  if (g.trail.length > 2) {
-    ctx.strokeStyle = '#F4D03F'; ctx.lineWidth = 5 * s; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    ctx.beginPath(); ctx.moveTo(g.trail[0].x, g.trail[0].y);
-    for (let i = 1; i < g.trail.length; i++) ctx.lineTo(g.trail[i].x, g.trail[i].y);
-    ctx.lineTo(g.player.x, g.player.y); ctx.stroke();
-    ctx.strokeStyle = 'rgba(255,248,200,0.5)'; ctx.lineWidth = 2 * s;
-    ctx.beginPath(); ctx.moveTo(g.trail[0].x, g.trail[0].y);
-    for (let i = 1; i < g.trail.length; i++) ctx.lineTo(g.trail[i].x, g.trail[i].y);
-    ctx.lineTo(g.player.x, g.player.y); ctx.stroke();
+  // ===== HINT PATH =====
+  if (g.hintTier >= 3 && g.hintPath.length > 0) {
+    ctx.strokeStyle = 'rgba(244,208,63,0.4)';
+    ctx.lineWidth = 4 * s;
+    ctx.lineCap = 'round';
+    ctx.setLineDash([8 * s, 6 * s]);
+    ctx.beginPath();
+    ctx.moveTo(g.player.x, g.player.y);
+    for (const hp of g.hintPath) {
+      ctx.lineTo(hp.x * TILE + TILE / 2, hp.y * TILE + TILE / 2);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
   }
 
-  // Pascal
-  const pb = Math.sin(g.time * 0.1) * s;
-  ctx.fillStyle = '#50C878'; ctx.beginPath(); ctx.ellipse(g.pascal.x, g.pascal.y + pb, 7 * s, 5 * s, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#2d6a2d'; ctx.beginPath();
-  ctx.arc(g.pascal.x - 3 * s, g.pascal.y + pb - 2 * s, 1.5 * s, 0, Math.PI * 2);
-  ctx.arc(g.pascal.x + 3 * s, g.pascal.y + pb - 2 * s, 1.5 * s, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#50C878'; ctx.lineWidth = 2 * s;
-  ctx.beginPath(); ctx.moveTo(g.pascal.x - 6 * s, g.pascal.y + pb);
-  ctx.quadraticCurveTo(g.pascal.x - 14 * s, g.pascal.y + pb - 8 * s, g.pascal.x - 10 * s, g.pascal.y + pb - 12 * s); ctx.stroke();
+  // Hint tier 1: pulse nearest lantern
+  if (g.hintTier >= 1) {
+    const nearest = findNearestItem();
+    if (nearest && !nearest.collected) {
+      const pulse = Math.sin(g.time * 0.1) * 0.15 + 1.15;
+      const glow = ctx.createRadialGradient(nearest.x, nearest.y, 2, nearest.x, nearest.y, TILE * pulse);
+      glow.addColorStop(0, 'rgba(255,215,0,0.4)');
+      glow.addColorStop(1, 'rgba(255,215,0,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(nearest.x - TILE * pulse, nearest.y - TILE * pulse, TILE * pulse * 2, TILE * pulse * 2);
+    }
+  }
 
-  // Rapunzel
+  // ===== ITEMS =====
+  for (const item of g.items) {
+    if (item.collected) continue;
+    if (item.type === 'lantern') {
+      const glow = ctx.createRadialGradient(item.x, item.y, 2, item.x, item.y, 22 * s);
+      glow.addColorStop(0, 'rgba(255,215,0,0.4)');
+      glow.addColorStop(1, 'rgba(255,215,0,0)');
+      ctx.fillStyle = glow;
+      const gr = 22 * s;
+      ctx.fillRect(item.x - gr, item.y - gr, gr * 2, gr * 2);
+      const bob = Math.sin(g.time * 0.05 + item.x) * 2 * s;
+      ctx.fillStyle = '#FFD700';
+      ctx.beginPath(); ctx.arc(item.x, item.y + bob, 8 * s, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#FFF8DC';
+      ctx.beginPath(); ctx.arc(item.x, item.y + bob - s, 4 * s, 0, Math.PI * 2); ctx.fill();
+      // White outline for accessibility
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(item.x, item.y + bob, 9 * s, 0, Math.PI * 2); ctx.stroke();
+    } else if (item.type === 'pan') {
+      ctx.fillStyle = '#4a4a4a';
+      ctx.beginPath(); ctx.arc(item.x, item.y, 10 * s, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#6a6a6a';
+      ctx.beginPath(); ctx.arc(item.x, item.y, 7 * s, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#4a4a4a'; ctx.lineWidth = 3 * s;
+      ctx.beginPath(); ctx.moveTo(item.x + 8 * s, item.y); ctx.lineTo(item.x + 18 * s, item.y - 3 * s); ctx.stroke();
+      // White outline
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(item.x, item.y, 11 * s, 0, Math.PI * 2); ctx.stroke();
+    } else if (item.type === 'hidden') {
+      // Subtle paintbrush
+      const vis = Math.sin(g.time * 0.03 + item.x) * 0.2 + 0.35;
+      ctx.globalAlpha = vis;
+      ctx.fillStyle = '#FF69B4';
+      ctx.save();
+      ctx.translate(item.x, item.y);
+      ctx.rotate(0.3);
+      ctx.fillRect(-2 * s, -8 * s, 4 * s, 12 * s);
+      ctx.fillStyle = '#8B4513';
+      ctx.fillRect(-3 * s, 4 * s, 6 * s, 5 * s);
+      ctx.restore();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // Tap target indicator
+  if (g.tapTarget && g.autoPath.length > 0) {
+    ctx.strokeStyle = 'rgba(255,215,0,0.3)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.arc(g.tapTarget.x, g.tapTarget.y, 12 * s, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // ===== HAIR TRAIL =====
+  if (g.trail.length > 2) {
+    // Glowing hair
+    const hairGlow = Math.sin(g.time * 0.04) * 0.15 + 0.85;
+    ctx.strokeStyle = `rgba(244,208,63,${hairGlow})`;
+    ctx.lineWidth = 5 * s;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.shadowColor = '#FFD700';
+    ctx.shadowBlur = 8 * s;
+    ctx.beginPath(); ctx.moveTo(g.trail[0].x, g.trail[0].y);
+    for (let i = 1; i < g.trail.length; i++) ctx.lineTo(g.trail[i].x, g.trail[i].y);
+    ctx.lineTo(g.player.x, g.player.y);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Highlight
+    ctx.strokeStyle = `rgba(255,248,200,${hairGlow * 0.5})`;
+    ctx.lineWidth = 2 * s;
+    ctx.beginPath(); ctx.moveTo(g.trail[0].x, g.trail[0].y);
+    for (let i = 1; i < g.trail.length; i++) ctx.lineTo(g.trail[i].x, g.trail[i].y);
+    ctx.lineTo(g.player.x, g.player.y);
+    ctx.stroke();
+  }
+
+  // ===== PASCAL =====
+  const pb = Math.sin(g.time * 0.1) * s;
+  const pascalX = g.pascal.x, pascalY = g.pascal.y + pb;
+
+  // Pascal body with pattern
+  ctx.fillStyle = g.pascal.color;
+  ctx.beginPath(); ctx.ellipse(pascalX, pascalY, 7 * s, 5 * s, 0, 0, Math.PI * 2); ctx.fill();
+
+  // Pattern overlay
+  if (save.pascalPattern === 'stripes') {
+    ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 1;
+    for (let i = -2; i <= 2; i++) {
+      ctx.beginPath();
+      ctx.moveTo(pascalX + i * 3 * s, pascalY - 5 * s);
+      ctx.lineTo(pascalX + i * 3 * s, pascalY + 5 * s);
+      ctx.stroke();
+    }
+  } else if (save.pascalPattern === 'dots') {
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    for (let i = 0; i < 4; i++) {
+      ctx.beginPath();
+      ctx.arc(pascalX - 3 * s + i * 2 * s, pascalY + (i % 2) * 2 * s - s, s, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // White outline for accessibility
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.ellipse(pascalX, pascalY, 8 * s, 6 * s, 0, 0, Math.PI * 2); ctx.stroke();
+
+  // Eyes
+  ctx.fillStyle = '#1a3a1a';
+  ctx.beginPath();
+  ctx.arc(pascalX - 3 * s, pascalY - 2 * s, 1.5 * s, 0, Math.PI * 2);
+  ctx.arc(pascalX + 3 * s, pascalY - 2 * s, 1.5 * s, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tail
+  ctx.strokeStyle = g.pascal.color; ctx.lineWidth = 2 * s;
+  ctx.beginPath();
+  ctx.moveTo(pascalX - 6 * s, pascalY);
+  ctx.quadraticCurveTo(pascalX - 14 * s, pascalY - 8 * s, pascalX - 10 * s, pascalY - 12 * s);
+  ctx.stroke();
+
+  // Hint tier 2: Pascal looks toward goal
+  if (g.hintTier >= 2) {
+    const nearest = findNearestItem();
+    if (nearest) {
+      const angle = Math.atan2(nearest.y - pascalY, nearest.x - pascalX);
+      ctx.fillStyle = '#FFD700';
+      ctx.beginPath();
+      ctx.arc(pascalX + Math.cos(angle) * 12 * s, pascalY + Math.sin(angle) * 12 * s, 2 * s, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // ===== RAPUNZEL =====
   const px = g.player.x, py = g.player.y;
   const breathe = Math.sin(g.time * 0.06) * s;
   const flip = g.facing === 'left' ? -1 : 1;
-  ctx.save(); ctx.translate(px, py); ctx.scale(flip, 1);
+  const dress = DRESS_COLORS[save.dressColor] || DRESS_COLORS.purple;
+
+  ctx.save();
+  ctx.translate(px, py);
+  ctx.scale(flip * g.player.squashX, g.player.squashY);
 
   // Dress
-  ctx.fillStyle = '#9B59B6';
+  ctx.fillStyle = dress.main;
   ctx.beginPath(); ctx.moveTo(-10 * s, -2 * s); ctx.lineTo(10 * s, -2 * s);
-  ctx.lineTo(13 * s, (14 + breathe) * s); ctx.lineTo(-13 * s, (14 + breathe) * s); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = '#8E44AD';
+  ctx.lineTo(13 * s, (14 + breathe) * s); ctx.lineTo(-13 * s, (14 + breathe) * s);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = dress.dark;
   ctx.beginPath(); ctx.moveTo(-5 * s, 2 * s); ctx.lineTo(5 * s, 2 * s);
-  ctx.lineTo(8 * s, (14 + breathe) * s); ctx.lineTo(-8 * s, (14 + breathe) * s); ctx.closePath(); ctx.fill();
+  ctx.lineTo(8 * s, (14 + breathe) * s); ctx.lineTo(-8 * s, (14 + breathe) * s);
+  ctx.closePath(); ctx.fill();
   // Lace
-  ctx.strokeStyle = '#D2B4DE'; ctx.lineWidth = 1;
+  ctx.strokeStyle = dress.lace; ctx.lineWidth = 1;
   const lY = (14 + breathe) * s;
   ctx.beginPath(); ctx.moveTo(-13 * s, lY);
-  for (let i = 0; i < 6; i++) { ctx.lineTo(-13 * s + i * 4.5 * s + 2 * s, lY - 2 * s); ctx.lineTo(-13 * s + (i + 1) * 4.5 * s, lY); }
+  for (let i = 0; i < 6; i++) {
+    ctx.lineTo(-13 * s + i * 4.5 * s + 2 * s, lY - 2 * s);
+    ctx.lineTo(-13 * s + (i + 1) * 4.5 * s, lY);
+  }
   ctx.stroke();
 
   // Head
-  ctx.fillStyle = '#FFDAB9'; ctx.beginPath(); ctx.arc(0, -8 * s, 9 * s, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#F4D03F'; ctx.beginPath(); ctx.arc(0, -11 * s, 8 * s, Math.PI, Math.PI * 2); ctx.fill();
-  ctx.fillRect(-8 * s, -12 * s, 2 * s, 6 * s); ctx.fillRect(6 * s, -12 * s, 2 * s, 6 * s);
-  // Eyes
-  ctx.fillStyle = '#2ECC71'; ctx.beginPath();
-  ctx.arc(-3 * s, -8 * s, 2 * s, 0, Math.PI * 2); ctx.arc(3 * s, -8 * s, 2 * s, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = 'white'; ctx.beginPath();
-  ctx.arc(-2.5 * s, -8.5 * s, 0.8 * s, 0, Math.PI * 2); ctx.arc(3.5 * s, -8.5 * s, 0.8 * s, 0, Math.PI * 2); ctx.fill();
-  // Smile
-  ctx.strokeStyle = '#C0392B'; ctx.lineWidth = s; ctx.beginPath(); ctx.arc(0, -5 * s, 3 * s, 0.1 * Math.PI, 0.9 * Math.PI); ctx.stroke();
-  // Cheeks
-  ctx.fillStyle = 'rgba(255,150,150,0.3)'; ctx.beginPath();
-  ctx.arc(-6 * s, -6 * s, 2.5 * s, 0, Math.PI * 2); ctx.arc(6 * s, -6 * s, 2.5 * s, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#FFDAB9';
+  ctx.beginPath(); ctx.arc(0, -8 * s, 9 * s, 0, Math.PI * 2); ctx.fill();
+  // Hair
+  ctx.fillStyle = '#F4D03F';
+  ctx.beginPath(); ctx.arc(0, -11 * s, 8 * s, Math.PI, Math.PI * 2); ctx.fill();
+  ctx.fillRect(-8 * s, -12 * s, 2 * s, 6 * s);
+  ctx.fillRect(6 * s, -12 * s, 2 * s, 6 * s);
 
-  // Pan
+  // Hair flower/crown
+  const flower = FLOWERS[save.hairFlower];
+  if (flower) {
+    if (flower.isCrown) {
+      // Crown
+      ctx.fillStyle = flower.petals;
+      ctx.beginPath();
+      ctx.moveTo(-6 * s, -17 * s);
+      ctx.lineTo(-4 * s, -22 * s);
+      ctx.lineTo(-1 * s, -18 * s);
+      ctx.lineTo(2 * s, -23 * s);
+      ctx.lineTo(5 * s, -18 * s);
+      ctx.lineTo(7 * s, -22 * s);
+      ctx.lineTo(8 * s, -17 * s);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = flower.center;
+      ctx.beginPath(); ctx.arc(1 * s, -19 * s, 1.5 * s, 0, Math.PI * 2); ctx.fill();
+    } else {
+      // Flower
+      const fSize = flower.size;
+      ctx.fillStyle = flower.petals;
+      for (let p = 0; p < 5; p++) {
+        const angle = (p / 5) * Math.PI * 2 - Math.PI / 2;
+        ctx.beginPath();
+        ctx.arc(5 * s + Math.cos(angle) * 3 * s * fSize, -16 * s + Math.sin(angle) * 3 * s * fSize, 2 * s * fSize, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = flower.center;
+      ctx.beginPath(); ctx.arc(5 * s, -16 * s, 1.5 * s * fSize, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // Eyes (with blink)
+  const isBlinking = g.player.blinkTimer > 200 && g.player.blinkTimer <= 205;
+  if (isBlinking) {
+    ctx.strokeStyle = '#2ECC71'; ctx.lineWidth = s;
+    ctx.beginPath(); ctx.moveTo(-5 * s, -8 * s); ctx.lineTo(-1 * s, -8 * s); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(1 * s, -8 * s); ctx.lineTo(5 * s, -8 * s); ctx.stroke();
+  } else {
+    ctx.fillStyle = '#2ECC71';
+    ctx.beginPath();
+    ctx.arc(-3 * s, -8 * s, 2 * s, 0, Math.PI * 2);
+    ctx.arc(3 * s, -8 * s, 2 * s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(-2.5 * s, -8.5 * s, 0.8 * s, 0, Math.PI * 2);
+    ctx.arc(3.5 * s, -8.5 * s, 0.8 * s, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Smile
+  ctx.strokeStyle = '#C0392B'; ctx.lineWidth = s;
+  ctx.beginPath(); ctx.arc(0, -5 * s, 3 * s, 0.1 * Math.PI, 0.9 * Math.PI); ctx.stroke();
+  // Cheeks
+  ctx.fillStyle = 'rgba(255,150,150,0.3)';
+  ctx.beginPath();
+  ctx.arc(-6 * s, -6 * s, 2.5 * s, 0, Math.PI * 2);
+  ctx.arc(6 * s, -6 * s, 2.5 * s, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Frying pan
   if (g.hasPan) {
     const sw = Math.sin(g.time * 0.15) * 0.3;
     ctx.save(); ctx.translate(12 * s, -2 * s); ctx.rotate(sw - 0.5);
@@ -585,9 +1852,24 @@ function gameLoop() {
     ctx.beginPath(); ctx.moveTo(5 * s, 0); ctx.lineTo(12 * s, -4 * s); ctx.stroke();
     ctx.restore();
   }
+
+  // White outline for character accessibility
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(0, 0, 16 * s, 0, Math.PI * 2); ctx.stroke();
+
   ctx.restore();
 
-  // Particles
+  // ===== IDLE GLOW =====
+  if (g.idleTimer > 180) { // 3 seconds
+    const glowAlpha = Math.sin(g.time * 0.05) * 0.1 + 0.15;
+    const hairGlow = ctx.createRadialGradient(px, py, 5, px, py, 30 * s);
+    hairGlow.addColorStop(0, `rgba(255,215,0,${glowAlpha})`);
+    hairGlow.addColorStop(1, 'rgba(255,215,0,0)');
+    ctx.fillStyle = hairGlow;
+    ctx.beginPath(); ctx.arc(px, py, 30 * s, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // ===== PARTICLES =====
   for (const p of g.particles) {
     ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
     ctx.beginPath(); ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2); ctx.fill();
@@ -597,46 +1879,81 @@ function gameLoop() {
   // Floating text
   for (const ft of g.floatingTexts) {
     ctx.globalAlpha = ft.life; ctx.fillStyle = 'white';
-    ctx.font = `bold ${Math.round(14 * s)}px sans-serif`; ctx.textAlign = 'center';
+    ctx.font = `bold ${Math.round(16 * s)}px sans-serif`; ctx.textAlign = 'center';
     ctx.fillText(ft.text, ft.x, ft.y);
   }
   ctx.globalAlpha = 1;
 
-  // HUD
-  const hh = Math.round(30 * s);
-  ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(0, 0, canvasW, hh);
-  const fs = Math.max(10, Math.round(13 * s));
+  // ===== HUD =====
+  const hh = Math.round(32 * s);
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(0, 0, canvasW, hh);
+  const fs = Math.max(11, Math.round(13 * s));
   ctx.fillStyle = 'white'; ctx.font = `bold ${fs}px sans-serif`;
-  ctx.textAlign = 'left'; ctx.fillText(`${data.emoji} ${data.name}`, 8 * s, hh * 0.7);
-  ctx.textAlign = 'right'; ctx.fillText(`🏮 ${g.lanterns}/${data.required}`, canvasW - 8 * s, hh * 0.7);
-  if (g.hasPan) ctx.fillText('🍳', canvasW - 60 * s, hh * 0.7);
-  ctx.textAlign = 'center';
-  if (!g.exitOpen) {
-    ctx.fillStyle = '#FFD700'; ctx.font = `${Math.max(9, Math.round(11 * s))}px sans-serif`;
-    ctx.fillText(`Collect ${data.required - g.lanterns} more lanterns!`, canvasW / 2, hh * 0.7);
+  ctx.textAlign = 'left';
+  ctx.fillText(`${data.emoji} ${data.name}`, 8 * s, hh * 0.7);
+  ctx.textAlign = 'right';
+
+  if (!g.freePlay) {
+    ctx.fillText(`🏮 ${g.lanterns}/${data.required}`, canvasW - 8 * s, hh * 0.7);
+    if (g.hasPan) ctx.fillText('🍳', canvasW - 60 * s, hh * 0.7);
+
+    ctx.textAlign = 'center';
+    if (!g.exitOpen) {
+      ctx.fillStyle = '#FFD700'; ctx.font = `${Math.max(9, Math.round(11 * s))}px sans-serif`;
+      ctx.fillText(`${data.required - g.lanterns} more 🏮`, canvasW / 2, hh * 0.7);
+    } else {
+      ctx.fillStyle = Math.sin(g.time * 0.1) > 0 ? '#4CAF50' : '#8BC34A';
+      ctx.font = `bold ${Math.max(10, Math.round(12 * s))}px sans-serif`;
+      ctx.fillText('🚪 Find the exit!', canvasW / 2, hh * 0.7);
+    }
   } else {
-    ctx.fillStyle = Math.sin(g.time * 0.1) > 0 ? '#4CAF50' : '#8BC34A';
-    ctx.font = `bold ${Math.max(10, Math.round(12 * s))}px sans-serif`;
-    ctx.fillText('✨ Find the exit! ✨', canvasW / 2, hh * 0.7);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#A5D6A7'; ctx.font = `${Math.max(10, Math.round(12 * s))}px sans-serif`;
+    ctx.fillText('🌈 Free Play', canvasW / 2, hh * 0.7);
+  }
+
+  // Hidden count
+  if (g.hiddenTotal > 0 && !g.freePlay) {
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#FF69B4'; ctx.font = `${Math.max(8, Math.round(9 * s))}px sans-serif`;
+    ctx.fillText(`🎨 ${g.hiddenCount}/${g.hiddenTotal}`, 8 * s, hh * 0.7 + 12 * s);
+  }
+
+  // Home button
+  ctx.textAlign = 'right';
+  ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = `${Math.round(10 * s)}px sans-serif`;
+  // Using canvas for minimal home button
+  const hbx = canvasW - 8 * s, hby = canvasH - 8 * s;
+  ctx.fillText('🏠', hbx, hby);
+
+  // ===== NARRATIVE OVERLAY =====
+  if (narrativeTimer > 0 && narrativeAlpha > 0) {
+    ctx.fillStyle = `rgba(0,0,0,${narrativeAlpha * 0.5})`;
+    ctx.fillRect(0, canvasH * 0.7, canvasW, canvasH * 0.2);
+    ctx.fillStyle = `rgba(255,215,0,${narrativeAlpha})`;
+    ctx.font = `${Math.round(16 * s)}px Georgia, serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(`"${narrativeText}"`, canvasW / 2, canvasH * 0.82);
   }
 
   requestAnimationFrame(gameLoop);
 }
 
-// ===== NAVIGATION =====
+function findNearestItem() {
+  let nearest = null, minDist = Infinity;
+  for (const item of game.items) {
+    if (item.collected) continue;
+    if (item.type === 'lantern' || (item.type === 'pan' && !game.hasPan)) {
+      const d = Math.hypot(item.x - game.player.x, item.y - game.player.y);
+      if (d < minDist) { minDist = d; nearest = item; }
+    }
+  }
+  return nearest;
+}
+
+// ===== VICTORY ANIMATION =====
 let victoryInterval = null;
-
-function startGame() {
-  currentLevel = 0; game.hasPan = false;
-  screen = 'playing';
-  calcSizes(); initLevel(0); renderPlaying();
-}
-
-function nextLevel() {
-  currentLevel++;
-  screen = 'playing';
-  calcSizes(); initLevel(currentLevel); renderPlaying();
-}
 
 function startVictoryAnim() {
   if (victoryInterval) clearInterval(victoryInterval);
@@ -651,10 +1968,13 @@ function startVictoryAnim() {
 window.addEventListener('keydown', e => {
   if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
   game.keys[e.key] = true;
+  ensureAudio();
+  // Escape to go home
+  if (e.key === 'Escape' && screen === 'playing') goTitle();
 }, { passive: false });
 window.addEventListener('keyup', e => { game.keys[e.key] = false; });
 
-// Prevent pinch zoom globally
+// Prevent pinch zoom
 document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 document.addEventListener('gesturestart', e => e.preventDefault());
 document.addEventListener('gesturechange', e => e.preventDefault());
@@ -662,9 +1982,16 @@ document.addEventListener('gesturechange', e => e.preventDefault());
 // Handle resize
 window.addEventListener('resize', () => {
   if (screen === 'playing') {
-    calcSizes(); initLevel(currentLevel); renderPlaying();
+    calcSizes();
+    initLevel(currentLevel);
+    if (game.freePlay) { game.freePlay = true; offDirty = true; }
+    renderPlaying();
   }
 });
+
+// Ensure audio on first interaction
+document.addEventListener('touchstart', ensureAudio, { once: true });
+document.addEventListener('click', ensureAudio, { once: true });
 
 // ===== SERVICE WORKER =====
 if ('serviceWorker' in navigator) {
