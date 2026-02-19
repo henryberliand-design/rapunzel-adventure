@@ -1,0 +1,24 @@
+{
+  "name": "Rapunzel's Great Adventure",
+  "short_name": "Rapunzel",
+  "description": "Rapunzel's Great Adventure - A game by Anna & Dad",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#2c1654",
+  "theme_color": "#2c1654",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
