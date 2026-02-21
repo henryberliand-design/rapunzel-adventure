@@ -14,8 +14,10 @@
 <meta name="description" content="Rapunzel's Great Adventure - A game by Anna & Dad">
 
 <!-- App Icons -->
-<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
-<link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512x512.png">
+<link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png">
 
 <!-- Web App Manifest -->
 <link rel="manifest" href="/manifest.json">
@@ -1995,7 +1997,9 @@ document.addEventListener('click', ensureAudio, { once: true });
 
 // ===== SERVICE WORKER =====
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(() => {});
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
 }
 
 // ===== BOOT =====
